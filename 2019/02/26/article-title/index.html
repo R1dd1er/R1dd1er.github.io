@@ -79,17 +79,21 @@
 
 
 
-<meta name="description" content="test">
+<meta name="description" content="##前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 ##正文 &amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ere">
 <meta property="og:type" content="article">
-<meta property="og:title" content="article title">
+<meta property="og:title" content="对一个“简单”的PHP弱类型技术点的刨根问底">
 <meta property="og:url" content="http://yoursite.com/2019/02/26/article-title/index.html">
 <meta property="og:site_name" content="R1dd1er&#39;s blogs">
-<meta property="og:description" content="test">
+<meta property="og:description" content="##前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 ##正文 &amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ere">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-02-26T13:43:33.715Z">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g0q12nlsrbj307i048glg.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3oly1g0q152laxjj30t00aqta0.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3oly1g0q15rh05mj308703ft8k.jpg">
+<meta property="og:updated_time" content="2019-03-03T15:38:29.474Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="article title">
-<meta name="twitter:description" content="test">
+<meta name="twitter:title" content="对一个“简单”的PHP弱类型技术点的刨根问底">
+<meta name="twitter:description" content="##前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 ##正文 &amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ere">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g0q12nlsrbj307i048glg.jpg">
 
 
 
@@ -125,7 +129,7 @@
 
 
 
-  <title>article title | R1dd1er's blogs</title>
+  <title>对一个“简单”的PHP弱类型技术点的刨根问底 | R1dd1er's blogs</title>
   
 
 
@@ -259,7 +263,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">article title</h1>
+          <h1 class="post-title" itemprop="name headline">对一个“简单”的PHP弱类型技术点的刨根问底</h1>
         
 
         <div class="post-meta">
@@ -314,7 +318,69 @@
       
 
       
-        <h1 id="test"><a href="#test" class="headerlink" title="test"></a>test</h1>
+        <p>##前言<br>前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。</p>
+<p>##正文</p>
+<pre><code>&lt;?php
+$flag = &quot;xxx&quot;;
+if (isset ($_GET[&apos;password&apos;]))
+{
+    if (ereg (&quot;^[a-zA-Z0-9]+$&quot;, $_GET[&apos;password&apos;]) === FALSE)
+    {
+    echo &apos;     You password must be alphanumeric&apos;;
+    }
+else if (strlen($_GET[&apos;password&apos;]) &lt; 8 &amp;&amp; $_GET[&apos;password&apos;] 9999999)
+{
+    if (strpos ($_GET[&apos;password&apos;], &apos;-&apos;) !== FALSE) //strpos — 查找字符串首次出现的位置
+    {
+    die(&apos;Flag: &apos; . $flag);
+    }
+    else
+    {
+    echo(&apos;- have not been found&apos;);
+    }
+}
+else
+{
+echo &apos;Invalid password&apos;;
+}
+}    
+?&gt;    
+</code></pre><p>这是一题很简单的审计题，题目的原意也是要让我们利用ereg会被%00截断的特性进行绕过，网上也能找到很多的wp，普遍人都知道有两种解法，而其中的一种就是本文要讲的主要内容。（由于本文重点不是在这题的普通解法，有兴趣的朋友可以去bugku上自己试一试或者搜索wp）</p>
+<p>这奇妙的解法就是，传入password[]=1的时候居然也能拿到flag，当然，在许多wp上都能看到类似的解法，但是我很疑惑的就是，为什么可以这样？我翻了好些WP，许多人都是一笔带过，基本上都是类似password[]=10000000这样的答案，并没有详细的说明，我多次尝试后发现，不管password[]等于什么，都能拿到flag。</p>
+<p>在本地建立环境，对一些函数的结果进行分析</p>
+<p>$b = $_GET[‘password’];</p>
+<p>var_dump($b);</p>
+<p>=&gt;arrar(1){[0]=&gt;string(1)”1”}</p>
+<p>很明显，password[]=1这样传参是合法的，传入的确实是一个数组，而且还是字符型的。</p>
+<p>$a = ereg(“^[a-zA-Z0-9]+$”,$_GET[‘password’]);</p>
+<p>var_dump($a);</p>
+<p>=&gt;NULL</p>
+<p>ereg看来是处理不了数组，直接返回NULL，不等FALSE，自然就通过了这一步。</p>
+<p>$c = strlen($_GET[‘password’]);<br>var_dump($c);</p>
+<p>Strlen()函数返回的也是NULL</p>
+<p>接下来便是关键<br>strlen($_GET[‘password’]) &lt; 8&amp;&amp; $_GET[‘password’] &gt; 9999999)</p>
+<p>我怎么也想不明白，后半句数组和数字是怎么比较的，而且无论修改数组是什么，大于999999都成立，我在本地测试如果把大于改成小于号就立马不行，仿佛这个数组像是一个无穷大的数字，再来看前半段，通过刚刚的分析很容易知道这个语句实质上就是Null&lt;8，感觉好像没错，但是我也说不上为什么，null在这可以当作0吗？还是解析成空字符串？我各种搜索资料，但是得不到满意的答案，只好求救于dalao，然后dalao就带我打开了新世界的大门———直接看PHP的C源代码。</p>
+<p>（附上代码的GitHub地址：<a href="https://github.com/php/php-src/blob/master/Zend/zend_operators.c#L1981）" target="_blank" rel="noopener">https://github.com/php/php-src/blob/master/Zend/zend_operators.c#L1981）</a></p>
+<p>首先是看相关的函数的C代码</p>
+<pre><code>ZEND_API int ZEND_FASTCALL is_smaller_function(zval*result, zval *op1, zval *op2) /* {{{ */
+{
+if (compare_function(result, op1, op2) == FAILURE) {
+return FAILURE;
+}
+ZVAL_BOOL(result, (Z_LVAL_P(result) &lt; 0));
+return SUCCESS;
+}
+</code></pre><p>也是经dalao指点，这里return的东西并不是真正的返回值，只是类似于检测运行的正确性。那么接下来就看compare_function里面的内容，由于这个函数比较长，我就不全部贴出来了，想看完整函数的朋友可以自行进入搜索该函数</p>
+<p>先针对前一句的判断语句，我并没有找到NULL与整数比较的部分，我猜测在这里整数会被判断为True，于是参考Null与True判断的代码</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g0q12nlsrbj307i048glg.jpg" alt></p>
+<p>大概分析一下，便是NULL&lt;TRUE 然后ZVAL_LONG函数会给result赋值-1，在smaller函数中的BOOL函数中因为-1&lt;0所以最后的result是TRUE，也就是说NULL&lt;TRUE是永真的。如果改成大于号就为假了，通过在本地的测试我发现NULL&lt;8效果一样。<br>（由于比较耗时，所以我没有去查证IS_TRUE函数的内容，也是dalao给我的教诲，看这些代码有的时候要学会猜函数的功能）</p>
+<p>接下来便是对第二句判断语句的探究，其实后来发现可以在PHP手册上找到</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3oly1g0q152laxjj30t00aqta0.jpg" alt></p>
+<p>当然了既然都走到了看C代码的地步，当然也要看一看为什么会这样。</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3oly1g0q15rh05mj308703ft8k.jpg" alt></p>
+<p>跟刚刚的分析差不多，原来前者如果是数组，在这返回是1，返回到刚刚的smaller函数中，最后的返回值是False，也就是说  数组&lt;任意   是False，那么  数组&gt;任意   便是永真，这样便彻底的说明了这个题目为什么传入password[]=1能成立。</p>
+<p>到此，对这个小问题的探究差不多是告一段落了，如果有朋友看我截取的部分代码有些看不懂，可以自己去上面贴的GitHub的链接搜索函数看完整的代码</p>
+
       
     </div>
     
@@ -398,17 +464,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <section class="site-overview-wrap sidebar-panel">
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -452,22 +509,6 @@
         </div>
       </section>
 
-      
-      <!--noindex-->
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-              
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#test"><span class="nav-number">1.</span> <span class="nav-text">test</span></a></li></ol></div>
-            
-
-          </div>
-        </section>
-      <!--/noindex-->
       
 
       

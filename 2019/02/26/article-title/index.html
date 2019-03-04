@@ -79,20 +79,20 @@
 
 
 
-<meta name="description" content="##前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 ##正文 &amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ere">
+<meta name="description" content="前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 正文&amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ereg (&amp;q">
 <meta property="og:type" content="article">
 <meta property="og:title" content="对一个“简单”的PHP弱类型技术点的刨根问底">
 <meta property="og:url" content="http://yoursite.com/2019/02/26/article-title/index.html">
 <meta property="og:site_name" content="R1dd1er&#39;s blogs">
-<meta property="og:description" content="##前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 ##正文 &amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ere">
+<meta property="og:description" content="前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 正文&amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ereg (&amp;q">
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g0q12nlsrbj307i048glg.jpg">
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3oly1g0q152laxjj30t00aqta0.jpg">
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3oly1g0q15rh05mj308703ft8k.jpg">
-<meta property="og:updated_time" content="2019-03-03T16:15:14.274Z">
+<meta property="og:updated_time" content="2019-03-04T01:05:27.173Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="对一个“简单”的PHP弱类型技术点的刨根问底">
-<meta name="twitter:description" content="##前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 ##正文 &amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ere">
+<meta name="twitter:description" content="前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 正文&amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ereg (&amp;q">
 <meta name="twitter:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g0q12nlsrbj307i048glg.jpg">
 
 
@@ -318,9 +318,8 @@
       
 
       
-        <p>##前言<br>前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。</p>
-<p>##正文</p>
-<pre><code>&lt;?php
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。</p>
+<h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><pre><code>&lt;?php
 $flag = &quot;xxx&quot;;
 if (isset ($_GET[&apos;password&apos;]))
 {
@@ -464,8 +463,17 @@ return SUCCESS;
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -509,6 +517,22 @@ return SUCCESS;
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#正文"><span class="nav-number">2.</span> <span class="nav-text">正文</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       

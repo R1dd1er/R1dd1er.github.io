@@ -89,7 +89,7 @@
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g0q12nlsrbj307i048glg.jpg">
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3oly1g0q152laxjj30t00aqta0.jpg">
 <meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3oly1g0q15rh05mj308703ft8k.jpg">
-<meta property="og:updated_time" content="2019-03-03T15:38:29.474Z">
+<meta property="og:updated_time" content="2019-03-03T16:15:14.274Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="对一个“简单”的PHP弱类型技术点的刨根问底">
 <meta name="twitter:description" content="##前言前几天随手刷bugku上的CTF题的时候被一题简单的代码审计题卡了好久，在dalao的指点下对PHP的源代码进行分析才彻底搞明白，虽然过程花了一些时间，但是感觉收获还是很多的，因此记录下全过程分享给大家。 ##正文 &amp;lt;?php $flag = &amp;quot;xxx&amp;quot;; if (isset ($_GET[&amp;apos;password&amp;apos;])) {     if (ere">
@@ -328,7 +328,7 @@ if (isset ($_GET[&apos;password&apos;]))
     {
     echo &apos;     You password must be alphanumeric&apos;;
     }
-else if (strlen($_GET[&apos;password&apos;]) &lt; 8 &amp;&amp; $_GET[&apos;password&apos;] 9999999)
+else if (strlen($_GET[&apos;password&apos;]) &lt; 8 &amp;&amp; $_GET[&apos;password&apos;]&gt;9999999)
 {
     if (strpos ($_GET[&apos;password&apos;], &apos;-&apos;) !== FALSE) //strpos — 查找字符串首次出现的位置
     {

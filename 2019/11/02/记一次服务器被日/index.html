@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言头一天晚上用VPS开Redis做一些实验,把防火墙关了,然后带有未授权,结果第二天晚上再连VPS的时候发现连不上,访问昨晚开的web页面,没了,初步怀疑服务器被日了,以前并没有怎么刻意接触一些服务器被日的应急措施,看来这次是被动学习一波了,过程中确实也学习到了很多linux的其他知识,收获还是不错的吧,这篇文章就是同步于夺回服务器的过程中写的 VPS:CentOS 8 修改ssh密码?登进vu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次服务器风波">
+<meta property="og:url" content="http://yoursite.com/2019/11/02/记一次服务器被日/index.html">
+<meta property="og:site_name" content="R1dd1er&#39;s blogs">
+<meta property="og:description" content="前言头一天晚上用VPS开Redis做一些实验,把防火墙关了,然后带有未授权,结果第二天晚上再连VPS的时候发现连不上,访问昨晚开的web页面,没了,初步怀疑服务器被日了,以前并没有怎么刻意接触一些服务器被日的应急措施,看来这次是被动学习一波了,过程中确实也学习到了很多linux的其他知识,收获还是不错的吧,这篇文章就是同步于夺回服务器的过程中写的 VPS:CentOS 8 修改ssh密码?登进vu">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g84rfhzeb6j30oi06fgma.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g84y95e40fj30mj0ajtad.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g84y758vzyj30ml030t8t.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g852jf4lvaj30m404474h.jpg">
+<meta property="og:updated_time" content="2019-11-02T15:30:58.580Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="记一次服务器风波">
+<meta name="twitter:description" content="前言头一天晚上用VPS开Redis做一些实验,把防火墙关了,然后带有未授权,结果第二天晚上再连VPS的时候发现连不上,访问昨晚开的web页面,没了,初步怀疑服务器被日了,以前并没有怎么刻意接触一些服务器被日的应急措施,看来这次是被动学习一波了,过程中确实也学习到了很多linux的其他知识,收获还是不错的吧,这篇文章就是同步于夺回服务器的过程中写的 VPS:CentOS 8 修改ssh密码?登进vu">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g84rfhzeb6j30oi06fgma.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'R1dd1er'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/11/02/记一次服务器被日/">
+
+
+
+
+
+  <title>记一次服务器风波 | R1dd1er's blogs</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">R1dd1er's blogs</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">积跬步，至千里</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/11/02/记一次服务器被日/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="R1dd1er">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/touxiang.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="R1dd1er's blogs">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">记一次服务器风波</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-11-02T23:30:33+08:00">
+                2019-11-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>头一天晚上用VPS开Redis做一些实验,把防火墙关了,然后带有未授权,结果第二天晚上再连VPS的时候发现连不上,访问昨晚开的web页面,没了,初步怀疑服务器被日了,以前并没有怎么刻意接触一些服务器被日的应急措施,看来这次是被动学习一波了,过程中确实也学习到了很多linux的其他知识,收获还是不错的吧,这篇文章就是同步于夺回服务器的过程中写的</p>
+<p>VPS:CentOS 8</p>
+<h3 id="修改ssh密码"><a href="#修改ssh密码" class="headerlink" title="修改ssh密码?"></a>修改ssh密码?</h3><p>登进vultr后台,使用View Console连服务器,并点击<code>send CTRL+ALT+DEL</code>按钮,在linux中<code>CTRL+ALT+DEL</code>命令默认是重启操作,可以通过修改配置文件把这个命令关闭.</p>
+<p>重启后,按<code>ESC</code>进入GRUB(想深入了解的可以进入<a href="https://wiki.ubuntu.org.cn/GRUB%E5%85%A5%E9%97%A8%E6%95%99%E7%A8%8B" target="_blank" rel="noopener">https://wiki.ubuntu.org.cn/GRUB%E5%85%A5%E9%97%A8%E6%95%99%E7%A8%8B</a>学习),然后按<code>e</code>编辑第一个选项,找到以linux开头的内核行的<code>ro</code>关键字,并修改为<code>rw init=/sysroot/bin/sh</code>,然后点击<code>CTRL+X</code>就可以启动单用户模式了,接下来用<code>chroot /sysroot</code>就可以以root权限访问服务器了,本来到了这一步,接下来使用<code>passwd</code>就可以直接更改root密码,嗯…失败了,给的错误是<code>authentication token manipulation error</code>,此时觉得事情有些微妙,于是启动搜索引擎寻找处理方式</p>
+<p>一种说法是这样的</p>
+<blockquote>
+<p>1.报这样的错误是：密码:身份验证令牌操作错误，一般是密码文件的权限的问题，不过也有可能是根目录空间满。</p>
+<p>用lsattr命令查看存放用户和密码的文件属性，发现有i选项：（i：不得任意更动文件或目录。）所以导致所有的用户都不能修改密码，因为没有权限允许。</p>
+<p>2.我们需要用chattr命令将i权限撤销，然后再修改，就可以了</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">lsattr:命令用于显示文件属性</span><br><span class="line">chattr:执行改变文件或目录的属性</span><br><span class="line"></span><br><span class="line">使用 lsattr 命令来显示文件属性：</span><br><span class="line">lsattr /etc/resolv.conf</span><br><span class="line"></span><br><span class="line">用chattr命令防止系统中某个关键文件被修改：</span><br><span class="line">chattr +i /etc/resolv.conf</span><br></pre></td></tr></table></figure>
+<p>我一开始直接用<code>chattr</code>命令,发现居然没有这个命令???然后<code>yum install chattr -y</code>一下,报错了<code>failed to synchronize cache for repo &#39;AppStream&#39;</code>,情况有点不对劲,毕竟我的ubuntu服务器和centos7虚拟机都是自带这个命令的,难道命令被删了?</p>
+<p>那就先用<code>lsattr</code>看看情况,还好有这个命令,执行<code>lsattr /etc/passwd</code>和<code>lsattr /etc/shadow</code>,文件属性中并没有<code>i</code>关键字,看来并不是这方面的问题</p>
+<h3 id="查询访问记录"><a href="#查询访问记录" class="headerlink" title="查询访问记录"></a>查询访问记录</h3><p>修改密码陷入僵局,那就研究一下访问查询,看一下<code>secure</code>日志,emmmm不看不知道,原来几乎每秒都有人在扫我的ssh尝试连接,<br>以前还真没特意关注过这个文件</p>
+<p>我开了一台配置一样的VPS,<code>chattr</code>命令是可以执行的,尝试直接<code>passwd</code>,修改密码的命令一切正常</p>
+<p>通过查看新机的<code>secure</code>文件,确认了成功连接ssh的记录格式<br><code></code><br><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g84rfhzeb6j30oi06fgma.jpg" alt="ALWY6G87RXJ2NW51IZ2G%2P.png"><br>但是我在老机子上搜索关键字<code>Accepted</code>,并没有任何的匹配,可能大概率,相关的信息都已经被删除了</p>
+<p>查询资料后,知道了可以使用<code>last</code>命令,</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">last [-num | -n num] [-f file] [-t YYYYMMDDHHMMSS] [-R] [-adioxFw] [username..] [tty..]</span><br><span class="line"></span><br><span class="line">　　last作用是显示近期用户或终端的登录情况。通过last命令查看该程序的log，管理员可以获知谁曾经或者企图连接系统。</span><br><span class="line"></span><br><span class="line">　　执行last命令时，它会读取/var/log目录下名称为wtmp的文件，并把该文件记录的登录系统或终端的用户名单全部显示出来。默认显示wtmp的记录，btmp能显示的更详细，可以显示远程登录，例如ssh登录。</span><br><span class="line"></span><br><span class="line">last -10 -f /var/log/btmp   btmp存储的是登录错误的信息</span><br></pre></td></tr></table></figure>
+<p>使用<code>last</code>命令对比一下俩机子的情况后发现确实不太一样</p>
+<p>看来对应的文件的相关信息也被删除了</p>
+<h3 id="尝试开启ssh"><a href="#尝试开启ssh" class="headerlink" title="尝试开启ssh"></a>尝试开启ssh</h3><p>尝试开启ssh</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g84y95e40fj30mj0ajtad.jpg" alt="89FJPMJ)G(J125EVGC1WSWT.png"></p>
+<p>失败了   换一种方式试试看</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g84y758vzyj30ml030t8t.jpg" alt="NNOEIHWD}9)MBXCQ62_9H76.png"><br>还是不太行</p>
+<p>直接进入<code>/etc/ld.so.preload</code>把那行so配置删了就没这报错了</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g852jf4lvaj30m404474h.jpg" alt="6UIMVRKB0G6_%H@`$O1D9G.png"></p>
+<p>两种报错 尝试解决第一种<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mknod /dev/null c 1 3</span><br><span class="line"></span><br><span class="line">chmod 666 /dev/null</span><br></pre></td></tr></table></figure></p>
+<p>解决问题,成功启动ssh,发现还是连不上,ping一下,给了<code>Destination Host Unreachable</code>这个报错,这时候才反应过来,ifconfig一下,得,网卡炸了</p>
+<h3 id="顿悟"><a href="#顿悟" class="headerlink" title="顿悟"></a>顿悟</h3><p>其实这时候我才反应过来,我一开始连接ssh失败的原因并不是密码被改了,而是22端口被关了,也确实,我从控制台登陆我的VPS的时候就发现了端口全关闭,现在想想也觉得诡异,要是真被人日了,把22端口关了那他不是自己也连接不了吗,真是后知后觉,让我一直以VPS被别人root为思路在解决问题,一开始就应该反应过来可能并不是被人日了,但是上述的一些记录的查询结果也确实奇怪</p>
+<h3 id="chroot"><a href="#chroot" class="headerlink" title="chroot"></a>chroot</h3><p>从控制台登陆,一直是以<code>chroot</code>的身份进行访问,虽然<code>whoami</code>的结果也是root,但是一些命令的使用会有一些诡异的错误,那就顺便研究一下什么是chroot吧</p>
+<blockquote>
+<p>chroot，即 change root directory (更改 root 目录)。在 linux 系统中，系统默认的目录结构都是以 <code>/</code>，即是以根 (root) 开始的。而在使用 chroot 之后，系统的目录结构将以指定的位置作为 <code>/</code> 位置。</p>
+</blockquote>
+<h4 id="chroot的好处"><a href="#chroot的好处" class="headerlink" title="chroot的好处"></a>chroot的好处</h4><blockquote>
+<p>在经过 chroot 之后，系统读取到的目录和文件将不在是旧系统根下的而是新根下(即被指定的新的位置)的目录结构和文件，因此它带来的好处大致有以下3个：</p>
+<p>增加了系统的安全性，限制了用户的权力；</p>
+<p>在经过 chroot 之后，在新根下将访问不到旧系统的根目录结构和文件，这样就增强了系统的安全性。这个一般是在登录 (login) 前使用 chroot，以此达到用户不能访问一些特定的文件。<br>建立一个与原系统隔离的系统目录结构，方便用户的开发；</p>
+<p>使用 chroot 后，系统读取的是新根下的目录和文件，这是一个与原系统根下文件不相关的目录结构。在这个新的环境中，可以用来测试软件的静态编译以及一些与系统不相关的独立开发。<br>切换系统的根目录位置，引导 Linux 系统启动以及急救系统等。</p>
+<p>chroot 的作用就是切换系统的根位置，而这个作用最为明显的是在系统初始引导磁盘的处理过程中使用，从初始 RAM 磁盘 (initrd) 切换系统的根位置并执行真正的 init。另外，当系统出现一些问题时，我们也可以使用 chroot 来切换到一个临时的系统。</p>
+</blockquote>
+<h4 id="mount"><a href="#mount" class="headerlink" title="mount"></a>mount</h4><blockquote>
+<p>Linux中的根目录以外的文件要想被访问，需要将其“关联”到根目录下的某个目录来实现，这种关联操作就是“挂载”，这个目录就是“挂载点”，解除次关联关系的过程称之为“卸载”。</p>
+<p>注意：“挂载点”的目录需要以下几个要求：</p>
+<p>（1）目录事先存在，可以用mkdir命令新建目录；</p>
+<p>（2）挂载点目录不可被其他进程使用到；</p>
+<p>（3）挂载点下原有文件将被隐藏。</p>
+</blockquote>
+<p><code>mount [-fnrsvw] [-t vfstype] [-o options] device dir</code></p>
+<p><code>umount device</code></p>
+<p> device：指明要挂载的设备；</p>
+<p>(1) 设备文件：例如/dev/sda5</p>
+<p>(2) 卷标：-L ‘LABEL’, 例如 -L ‘MYDATA’</p>
+<p>(3) UUID, -U ‘UUID’：例如 -U ‘0c50523c-43f1-45e7-85c0-a126711d406e’</p>
+<p>(4) 伪文件系统名称：proc, sysfs, devtmpfs, configfs</p>
+<p>dir：挂载点</p>
+<h3 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h3><p>搞了半天,总之就是VPS的网卡炸了,也并没有找到原因,本来想发个邮件给vultr,但是这个vultr的发邮件功能有点毒,最后也懒得发了,弄到最后也算是半个乌龙吧,这篇文章可能内容有点杂乱,但是自己觉得整个过程还是挺有意思的,就记录下来了,不过倒确实提醒了自己,得找个时间学习一下取证和应急响应的相关知识了.至于VPS嘛,反正啥都没有,也懒得再研究了,直接销毁(</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a href="https://www.ibm.com/developerworks/cn/linux/l-cn-chroot/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/linux/l-cn-chroot/index.html</a></p>
+<p><a href="https://blog.csdn.net/daydayup654/article/details/78788310" target="_blank" rel="noopener">https://blog.csdn.net/daydayup654/article/details/78788310</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/02/SSRF与Redis未授权访问/" rel="next" title="SSRF进行Redis未授权访问">
+                <i class="fa fa-chevron-left"></i> SSRF进行Redis未授权访问
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/touxiang.png" alt="R1dd1er">
+            
+              <p class="site-author-name" itemprop="name">R1dd1er</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#修改ssh密码"><span class="nav-number">1.1.</span> <span class="nav-text">修改ssh密码?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查询访问记录"><span class="nav-number">1.2.</span> <span class="nav-text">查询访问记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#尝试开启ssh"><span class="nav-number">1.3.</span> <span class="nav-text">尝试开启ssh</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#顿悟"><span class="nav-number">1.4.</span> <span class="nav-text">顿悟</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#chroot"><span class="nav-number">1.5.</span> <span class="nav-text">chroot</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#chroot的好处"><span class="nav-number">1.5.1.</span> <span class="nav-text">chroot的好处</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mount"><span class="nav-number">1.5.2.</span> <span class="nav-text">mount</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#结束语"><span class="nav-number">1.6.</span> <span class="nav-text">结束语</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">2.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">R1dd1er</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

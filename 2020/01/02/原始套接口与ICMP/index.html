@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言网络程序设计的原始套接口编程部分,主要总结了ICMP的基本知识以及实现Ping和Traceroute 原始套接口什么是原始套接口基于传输层协议的数据交互,向程序员屏蔽了TCP、UDP和IP包的具体格式，简化了工作,限制了应用程序对通信协议的支持范围，降低了用户对数据的操作能力，影响了编程的灵活性,但允许对较低层协议(如IP或ICMP)进行直接访问，常用于检验新的网络协议实现，也可用于测试新配置">
+<meta property="og:type" content="article">
+<meta property="og:title" content="原始套接口与ICMP">
+<meta property="og:url" content="http://yoursite.com/2020/01/02/原始套接口与ICMP/index.html">
+<meta property="og:site_name" content="R1dd1er&#39;s blogs">
+<meta property="og:description" content="前言网络程序设计的原始套接口编程部分,主要总结了ICMP的基本知识以及实现Ping和Traceroute 原始套接口什么是原始套接口基于传输层协议的数据交互,向程序员屏蔽了TCP、UDP和IP包的具体格式，简化了工作,限制了应用程序对通信协议的支持范围，降低了用户对数据的操作能力，影响了编程的灵活性,但允许对较低层协议(如IP或ICMP)进行直接访问，常用于检验新的网络协议实现，也可用于测试新配置">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g8zo4ejd9rj30go0ciaet.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g8zontt0u9j30os0g70ts.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g8zoo1itsaj30pq0en0tt.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g8zoztrcltj30hm04j3yl.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g8zogaa64gj30op0grgm7.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g8zpj8krw4j30yg0c4dgp.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g8zpndvh7uj30go0e1ten.jpg">
+<meta property="og:updated_time" content="2020-01-02T14:30:47.409Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="原始套接口与ICMP">
+<meta name="twitter:description" content="前言网络程序设计的原始套接口编程部分,主要总结了ICMP的基本知识以及实现Ping和Traceroute 原始套接口什么是原始套接口基于传输层协议的数据交互,向程序员屏蔽了TCP、UDP和IP包的具体格式，简化了工作,限制了应用程序对通信协议的支持范围，降低了用户对数据的操作能力，影响了编程的灵活性,但允许对较低层协议(如IP或ICMP)进行直接访问，常用于检验新的网络协议实现，也可用于测试新配置">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1g8zo4ejd9rj30go0ciaet.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'R1dd1er'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/01/02/原始套接口与ICMP/">
+
+
+
+
+
+  <title>原始套接口与ICMP | R1dd1er's blogs</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">R1dd1er's blogs</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">积跬步，至千里</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/02/原始套接口与ICMP/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="R1dd1er">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/touxiang.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="R1dd1er's blogs">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">原始套接口与ICMP</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-01-02T22:29:02+08:00">
+                2020-01-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>网络程序设计的原始套接口编程部分,主要总结了ICMP的基本知识以及实现Ping和Traceroute</p>
+<h2 id="原始套接口"><a href="#原始套接口" class="headerlink" title="原始套接口"></a>原始套接口</h2><h3 id="什么是原始套接口"><a href="#什么是原始套接口" class="headerlink" title="什么是原始套接口"></a>什么是原始套接口</h3><p>基于传输层协议的数据交互,向程序员屏蔽了TCP、UDP和IP包的具体格式，简化了工作,限制了应用程序对通信协议的支持范围，降低了用户对数据的操作能力，影响了编程的灵活性,但允许对较低层协议(如IP或ICMP)进行直接访问，常用于检验新的网络协议实现，也可用于测试新配置或安装的网络设备。</p>
+<p>原始套接口的定义</p>
+<p><code>sockfd=socket(AF_INET,SOCK_RAW,protocol);</code></p>
+<p>socket第2个参数type设置为SOCK_RAW</p>
+<p><strong>常用的protocol</strong></p>
+<ol>
+<li>IPPROTO_ICMP：使用ICMP协议工作的原始套接口 </li>
+<li>IPPROTO_IGMP：使用IGMP协议工作的原始套接口</li>
+<li>IPPROTO_IP：可以接收内核到达的任何类型的IP数据报</li>
+</ol>
+<p>注意:只有root用户才能创建原始套接口，防止普通用户往网络写出自行构造的IP数据包</p>
+<p>虽然原始套接口也能完成数据的通信,但是因其没有使用用来标识进程的端口号，所以原始套接口的数据报只能与相应主机上的协议（内核软件）进行交互,因此,原始套接口的交互就是IP协议之间的交互.当然也可以是IP层其他协议间的交互如ICMP</p>
+<h2 id="ICMP"><a href="#ICMP" class="headerlink" title="ICMP"></a>ICMP</h2><h3 id="什么是ICMP协议"><a href="#什么是ICMP协议" class="headerlink" title="什么是ICMP协议"></a>什么是ICMP协议</h3><p>在IP通信中，经常有数据包到达不了对方的情况。原因是，在通信途中的某处的一个路由器由于不能处理所有的数据包，就将数据包一个一个丢弃了。或者，虽然到达了对方，但是由于搞错了端口号，服务器软件可能不能接受它。这时，在错误发生的现场，为了联络而飞过来的信鸽就是ICMP 报文。在IP 网络上，由于数据包被丢弃等原因，为了控制将必要的信息传递给发信方。ICMP 协议是为了辅助IP 协议，交换各种各样的控制信息而被制造出来的。</p>
+<p>ICMP 的内容是放在IP 数据包的数据部分里来互相交流的。也就是，从ICMP的报文格式来说，ICMP 是IP 的上层协议。但是，正如RFC 所记载的，ICMP 是分担了IP 的一部分功能。所以，被认为是与IP 同层的协议。</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g8zo4ejd9rj30go0ciaet.jpg" alt="806469-20180306123940403-1730998630.png"></p>
+<p>ICMP的报文分为两类，一类是ICMP询问报文，一类是ICMP差错报告报文</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g8zontt0u9j30os0g70ts.jpg" alt="图片1.png"></p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g8zoo1itsaj30pq0en0tt.jpg" alt="图片2.png"></p>
+<p>ICMP的报头如下</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g8zoztrcltj30hm04j3yl.jpg" alt="180924150424623.jpg"></p>
+<p>类型： 占一字节，标识ICMP报文的类型，目前已定义了14种，从类型值来看ICMP报文可以分为两大类。第一类是取值为1~127的差错报文，第2类是取值128以上的信息报文。</p>
+<p>代码： 占一字节，标识对应ICMP报文的代码。它与类型字段一起共同标识了ICMP报文的详细类型。</p>
+<p>校验和： 这是对包括ICMP报文数据部分在内的整个ICMP数据报的校验和，以检验报文在传输过程中是否出现了差错。其计算方法与在我们介绍IP报头中的校验和计算方法是一样的。</p>
+<p>标识： 占两字节，用于标识本ICMP进程，但仅适用于回显请求和应答ICMP报文，对于目标不可达ICMP报文和超时ICMP报文等，该字段的值为0。</p>
+<h3 id="ICMP实现Ping命令"><a href="#ICMP实现Ping命令" class="headerlink" title="ICMP实现Ping命令"></a>ICMP实现Ping命令</h3><p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g8zogaa64gj30op0grgm7.jpg" alt="180924150424622.jpg"><br>ping命令执行的时候，源主机首先会构建一个ICMP请求数据包，ICMP数据包内包含多个字段。最重要的是两个，第一个是类型字段，对于请求数据包而言该字段为8；另外一个是顺序号，主要用于区分连续ping的时候发出的多个数据包。每发出一个请求数据包，顺序号就会自动加1.为了能够计算往返时间RTT，它会在报文的数据部分插入发送时间。</p>
+<p>然后，由ICMP协议将这个数据包连同地址192.168.1.2一起交给IP层，IP层将以192.168.1.2作为目的地址，本机IP地址作为源地址，加上一些其它控制信息，构建一个IP数据包。</p>
+<p>接下来，需要加入MAC头。如果在本机ARP映射表中找出IP地址192.168.1.2所对应的MAC地址，则可以直接使用；如果没有，则需要发送ARP协议查询MAC地址，获得MAC地址后，由数据链路层构建一个数据帧，目的地址是IP层传过来的MAC地址，源地址则是本机的MAC地址；还要附加上一些控制信息，依据以太网的介质访问规则，将他们传送出去。</p>
+<p>主机B收到这个数据帧后，先检查它的目的MAC地址，并和本机的MAC地址对比，如果符合则接收，否则就丢弃。接收后检查该数据帧，将IP数据包从帧中提取出来，交给本机的IP层。同样IP层检查后，将有用的信息提取后交给ICMP协议。</p>
+<p>主机B会构建一个ICMP应答包，应答数据包的类型字段为0，顺序号为接收到的请求数据包中的顺序号，然后再发送出去给主机A。</p>
+<p>在规定的时间内，源主机如果没有接到ICMP的应答包，则说明目标主机不可达，如果接收到了ICMP应答包，则说明目标主机可达。</p>
+<h4 id="C语言实现Ping"><a href="#C语言实现Ping" class="headerlink" title="C语言实现Ping"></a>C语言实现Ping</h4><p>看来看去还是这篇写的最详细,就直接搬运过来了<a href="https://www.cnblogs.com/skyfsm/p/6348040.html?utm_source=itdadao&amp;utm_medium=referral" target="_blank" rel="noopener">https://www.cnblogs.com/skyfsm/p/6348040.html?utm_source=itdadao&amp;utm_medium=referral</a></p>
+<h5 id="ICMP包的封装"><a href="#ICMP包的封装" class="headerlink" title="ICMP包的封装"></a>ICMP包的封装</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">void icmp_pack(struct icmp* icmphdr, int seq, int length)</span><br><span class="line">&#123;</span><br><span class="line">    int i = 0;</span><br><span class="line"></span><br><span class="line">    icmphdr-&gt;icmp_type = ICMP_ECHO;  //类型填回送请求</span><br><span class="line">    icmphdr-&gt;icmp_code = 0;   </span><br><span class="line">    icmphdr-&gt;icmp_cksum = 0; //注意，这里先填写0，很重要！</span><br><span class="line">    icmphdr-&gt;icmp_seq = seq;  //这里的序列号我们填1,2,3,4....</span><br><span class="line">    icmphdr-&gt;icmp_id = pid &amp; 0xffff;  //我们使用pid作为icmp_id,icmp_id只是2字节，而pid有4字节</span><br><span class="line">    for(i=0;i&lt;length;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        icmphdr-&gt;icmp_data[i] = i;  //填充数据段，使ICMP报文大于64B</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    icmphdr-&gt;icmp_cksum = cal_chksum((unsigned short*)icmphdr, length); //校验和计算</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意,icmp_cksum 必须先填写为0再执行校验和算法计算，否则ping时对方主机会因为校验和计算错误而丢弃请求包，导致ping的失败</p>
+<p><strong>checksum(校验和)</strong>:计算机网络通信时，为了检验在数据传输过程中数据是否发生了错误，通常在传输数据的时候连同校验和一块传输，当接收端接受数据时候会从新计算校验和，如果与原校验和不同就视为出错，丢弃该数据包，并返回icmp报文。</p>
+<p>IP/ICMP/IGMP/TCP/UDP等协议的校验和算法都是相同的，采用的都是将数据流视为16位整数流进行重复叠加计算。为了计算检验和，首先把检验和字段置为0。然后，对有效数据范围内中每个16位进行二进制反码求和，结果存在检验和字段中，如果数据长度为奇数则补一字节0。当收到数据后，同样对有效数据范围中每个16位数进行二进制反码的求和。由于接收方在计算过程中包含了发送方存在首部中的检验和，因此，如果首部在传输过程中没有发生任何差错，那么接收方计算的结果应该为全0或全1(具体看实现了,本质一样) 。如果结果不是全0或全1，那么表示数据错误。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">/*校验和算法*/</span><br><span class="line">unsigned short cal_chksum(unsigned short *addr,int len)</span><br><span class="line">&#123;       int nleft=len;</span><br><span class="line">        int sum=0;</span><br><span class="line">        unsigned short *w=addr;</span><br><span class="line">        unsigned short answer=0;</span><br><span class="line"></span><br><span class="line">        /*把ICMP报头二进制数据以2字节为单位累加起来*/</span><br><span class="line">        while(nleft&gt;1)</span><br><span class="line">        &#123;       </span><br><span class="line">            sum+=*w++;</span><br><span class="line">            nleft-=2;</span><br><span class="line">        &#125;</span><br><span class="line">        /*若ICMP报头为奇数个字节，会剩下最后一字节。把最后一个字节视为一个2字节数据的高字节，这个2字节数据的低字节为0，继续累加*/</span><br><span class="line">        if( nleft==1)</span><br><span class="line">        &#123;       </span><br><span class="line">            *(unsigned char *)(&amp;answer)=*(unsigned char *)w;</span><br><span class="line">            sum+=answer;</span><br><span class="line">        &#125;</span><br><span class="line">        sum=(sum&gt;&gt;16)+(sum&amp;0xffff);</span><br><span class="line">        sum+=(sum&gt;&gt;16);</span><br><span class="line">        answer=~sum;</span><br><span class="line">        return answer;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="ICMP包的解包"><a href="#ICMP包的解包" class="headerlink" title="ICMP包的解包"></a>ICMP包的解包</h5><p>收到一个ICMP包，不要就认为这个包就是我们发出去的ICMP回送回答包，我们需要加一层代码来判断该ICMP报文的id和seq字段是否符合我们发送的ICMP报文的设置，来验证ICMP回复包的正确性。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">int icmp_unpack(char* buf, int len)</span><br><span class="line">&#123;</span><br><span class="line">    int iphdr_len;</span><br><span class="line">    struct timeval begin_time, recv_time, offset_time;</span><br><span class="line">    int rtt;  //round trip time</span><br><span class="line"></span><br><span class="line">    struct ip* ip_hdr = (struct ip *)buf;</span><br><span class="line">    iphdr_len = ip_hdr-&gt;ip_hl*4;</span><br><span class="line">    struct icmp* icmp = (struct icmp*)(buf+iphdr_len); //使指针跳过IP头指向ICMP头</span><br><span class="line">    len-=iphdr_len;  //icmp包长度</span><br><span class="line">    if(len &lt; 8)   //判断长度是否为ICMP包长度</span><br><span class="line">    &#123;</span><br><span class="line">        fprintf(stderr, &quot;Invalid icmp packet.Its length is less than 8\n&quot;);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //判断该包是ICMP回送回答包且该包是我们发出去的</span><br><span class="line">    if((icmp-&gt;icmp_type == ICMP_ECHOREPLY) &amp;&amp; (icmp-&gt;icmp_id == (pid &amp; 0xffff))) </span><br><span class="line">    &#123;</span><br><span class="line">        if((icmp-&gt;icmp_seq &lt; 0) || (icmp-&gt;icmp_seq &gt; PACKET_SEND_MAX_NUM))</span><br><span class="line">        &#123;</span><br><span class="line">            fprintf(stderr, &quot;icmp packet seq is out of range!\n&quot;);</span><br><span class="line">            return -1;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ping_packet[icmp-&gt;icmp_seq].flag = 0;</span><br><span class="line">        begin_time = ping_packet[icmp-&gt;icmp_seq].begin_time;  //去除该包的发出时间</span><br><span class="line">        gettimeofday(&amp;recv_time, NULL);</span><br><span class="line"></span><br><span class="line">        offset_time = cal_time_offset(begin_time, recv_time);</span><br><span class="line">        rtt = offset_time.tv_sec*1000 + offset_time.tv_usec/1000; //毫秒为单位</span><br><span class="line"></span><br><span class="line">        printf(&quot;%d byte from %s: icmp_seq=%u ttl=%d rtt=%d ms\n&quot;,</span><br><span class="line">            len, inet_ntoa(ip_hdr-&gt;ip_src), icmp-&gt;icmp_seq, ip_hdr-&gt;ip_ttl, rtt);        </span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    else</span><br><span class="line">    &#123;</span><br><span class="line">        fprintf(stderr, &quot;Invalid ICMP packet! Its id is not matched!\n&quot;);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="发送数据包"><a href="#发送数据包" class="headerlink" title="发送数据包"></a>发送数据包</h5><p>根据PING程序的框架，我们需要建立一个线程用于ping包的发送，使用sendto进行发包，发包速率维持在1秒1发，同时还需要用一个全局变量记录第一个ping包发出的时间，除此之外，我们还需要一个全局变量来记录我们发出的ping包到底有几个，这两个变量用于后来收到ping包回复后的数据计算。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">void ping_send()</span><br><span class="line">&#123;</span><br><span class="line">    char send_buf[128];</span><br><span class="line">    memset(send_buf, 0, sizeof(send_buf));</span><br><span class="line">    gettimeofday(&amp;start_time, NULL); //记录第一个ping包发出的时间</span><br><span class="line">    while(alive)</span><br><span class="line">    &#123;</span><br><span class="line">        int size = 0;</span><br><span class="line">        gettimeofday(&amp;(ping_packet[send_count].begin_time), NULL);</span><br><span class="line">        ping_packet[send_count].flag = 1; //将该标记为设置为该包已发送</span><br><span class="line"></span><br><span class="line">        icmp_pack((struct icmp*)send_buf, send_count, 64); //封装icmp包</span><br><span class="line">        size = sendto(rawsock, send_buf, 64, 0, (struct sockaddr*)&amp;dest, sizeof(dest));</span><br><span class="line">        send_count++; //记录发出ping包的数量</span><br><span class="line">        if(size &lt; 0)</span><br><span class="line">        &#123;</span><br><span class="line">            fprintf(stderr, &quot;send icmp packet fail!\n&quot;);</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        sleep(1);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="接收数据包"><a href="#接收数据包" class="headerlink" title="接收数据包"></a>接收数据包</h5><p>同样建立一个接收包的线程，采用select函数进行收包，并为select函数设置超时时间为200us，若发生超时，则进行下一个循环。同样地，我们也需要一个全局变量来记录成功接收到的ping回复包的数量。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">void ping_recv()</span><br><span class="line">&#123;</span><br><span class="line">    struct timeval tv;</span><br><span class="line">    tv.tv_usec = 200;  //设置select函数的超时时间为200us</span><br><span class="line">    tv.tv_sec = 0;</span><br><span class="line">    fd_set read_fd;</span><br><span class="line">    char recv_buf[512];</span><br><span class="line">    memset(recv_buf, 0 ,sizeof(recv_buf));</span><br><span class="line">    while(alive)</span><br><span class="line">    &#123;</span><br><span class="line">        int ret = 0;</span><br><span class="line">        FD_ZERO(&amp;read_fd);</span><br><span class="line">        FD_SET(rawsock, &amp;read_fd);</span><br><span class="line">        ret = select(rawsock+1, &amp;read_fd, NULL, NULL, &amp;tv);</span><br><span class="line">        switch(ret)</span><br><span class="line">        &#123;</span><br><span class="line">            case -1:</span><br><span class="line">                fprintf(stderr,&quot;fail to select!\n&quot;);</span><br><span class="line">                break;</span><br><span class="line">            case 0:</span><br><span class="line">                break;</span><br><span class="line">            default:</span><br><span class="line">                &#123;</span><br><span class="line">                    int size = recv(rawsock, recv_buf, sizeof(recv_buf), 0);</span><br><span class="line">                    if(size &lt; 0)</span><br><span class="line">                    &#123;</span><br><span class="line">                        fprintf(stderr,&quot;recv data fail!\n&quot;);</span><br><span class="line">                        continue;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    ret = icmp_unpack(recv_buf, size); //对接收的包进行解封</span><br><span class="line">                    if(ret == -1)  //不是属于自己的icmp包，丢弃不处理</span><br><span class="line">                    &#123;</span><br><span class="line">                        continue;</span><br><span class="line">                    &#125;</span><br><span class="line">                    recv_count++; //接收包计数</span><br><span class="line">                &#125;</span><br><span class="line">                break;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h5 id="中断处理"><a href="#中断处理" class="headerlink" title="中断处理"></a>中断处理</h5><p>我们规定了一次ping发送的包的最大值为64个，若超出该数值就停止发送。作为PING的使用者，我们一般只会发送若干个包，若有这几个包顺利返回，我们就crtl+c中断ping。这里的代码主要是为中断信号写一个中断处理函数，将alive这个全局变量设置为0，进而使发送ping包的循环停止而结束程序。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">void icmp_sigint(int signo)</span><br><span class="line">&#123;</span><br><span class="line">    alive = 0;</span><br><span class="line">    gettimeofday(&amp;end_time, NULL);</span><br><span class="line">    time_interval = cal_time_offset(start_time, end_time);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">signal(SIGINT, icmp_sigint);</span><br></pre></td></tr></table></figure>
+<h5 id="完整代码"><a href="#完整代码" class="headerlink" title="完整代码"></a>完整代码</h5><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;netinet/in.h&gt;</span><br><span class="line">#include &lt;netinet/ip.h&gt;</span><br><span class="line">#include &lt;netinet/ip_icmp.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">#include &lt;signal.h&gt;</span><br><span class="line">#include &lt;arpa/inet.h&gt;</span><br><span class="line">#include &lt;errno.h&gt;</span><br><span class="line">#include &lt;sys/time.h&gt;</span><br><span class="line">#include &lt;string.h&gt;</span><br><span class="line">#include &lt;netdb.h&gt;</span><br><span class="line">#include &lt;pthread.h&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">#define PACKET_SEND_MAX_NUM 64</span><br><span class="line"></span><br><span class="line">typedef struct ping_packet_status</span><br><span class="line">&#123;</span><br><span class="line">    struct timeval begin_time;</span><br><span class="line">    struct timeval end_time;</span><br><span class="line">    int flag;   //发送标志,1为已发送</span><br><span class="line">    int seq;     //包的序列号</span><br><span class="line">&#125;ping_packet_status;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ping_packet_status ping_packet[PACKET_SEND_MAX_NUM];</span><br><span class="line"></span><br><span class="line">int alive;</span><br><span class="line">int rawsock;</span><br><span class="line">int send_count;</span><br><span class="line">int recv_count;</span><br><span class="line">pid_t pid;</span><br><span class="line">struct sockaddr_in dest;</span><br><span class="line">struct timeval start_time;</span><br><span class="line">struct timeval end_time;</span><br><span class="line">struct timeval time_interval;</span><br><span class="line"></span><br><span class="line">/*校验和算法*/</span><br><span class="line">unsigned short cal_chksum(unsigned short *addr,int len)</span><br><span class="line">&#123;       int nleft=len;</span><br><span class="line">        int sum=0;</span><br><span class="line">        unsigned short *w=addr;</span><br><span class="line">        unsigned short answer=0;</span><br><span class="line"></span><br><span class="line">        /*把ICMP报头二进制数据以2字节为单位累加起来*/</span><br><span class="line">        while(nleft&gt;1)</span><br><span class="line">        &#123;       </span><br><span class="line">            sum+=*w++;</span><br><span class="line">            nleft-=2;</span><br><span class="line">        &#125;</span><br><span class="line">        /*若ICMP报头为奇数个字节，会剩下最后一字节。把最后一个字节视为一个2字节数据的高字节，这个2字节数据的低字节为0，继续累加*/</span><br><span class="line">        if( nleft==1)</span><br><span class="line">        &#123;       </span><br><span class="line">            *(unsigned char *)(&amp;answer)=*(unsigned char *)w;</span><br><span class="line">            sum+=answer;</span><br><span class="line">        &#125;</span><br><span class="line">        sum=(sum&gt;&gt;16)+(sum&amp;0xffff);</span><br><span class="line">        sum+=(sum&gt;&gt;16);</span><br><span class="line">        answer=~sum;</span><br><span class="line">        return answer;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">struct timeval cal_time_offset(struct timeval begin, struct timeval end)</span><br><span class="line">&#123;</span><br><span class="line">    struct timeval ans;</span><br><span class="line">    ans.tv_sec = end.tv_sec - begin.tv_sec;</span><br><span class="line">    ans.tv_usec = end.tv_usec - begin.tv_usec;</span><br><span class="line">    if(ans.tv_usec &lt; 0) //如果接收时间的usec小于发送时间的usec，则向sec域借位</span><br><span class="line">    &#123;</span><br><span class="line">        ans.tv_sec--;</span><br><span class="line">        ans.tv_usec+=1000000;</span><br><span class="line">    &#125;</span><br><span class="line">    return ans;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void icmp_pack(struct icmp* icmphdr, int seq, int length)</span><br><span class="line">&#123;</span><br><span class="line">    int i = 0;</span><br><span class="line"></span><br><span class="line">    icmphdr-&gt;icmp_type = ICMP_ECHO;</span><br><span class="line">    icmphdr-&gt;icmp_code = 0;</span><br><span class="line">    icmphdr-&gt;icmp_cksum = 0;</span><br><span class="line">    icmphdr-&gt;icmp_seq = seq;</span><br><span class="line">    icmphdr-&gt;icmp_id = pid &amp; 0xffff;</span><br><span class="line">    for(i=0;i&lt;length;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        icmphdr-&gt;icmp_data[i] = i;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    icmphdr-&gt;icmp_cksum = cal_chksum((unsigned short*)icmphdr, length);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int icmp_unpack(char* buf, int len)</span><br><span class="line">&#123;</span><br><span class="line">    int iphdr_len;</span><br><span class="line">    struct timeval begin_time, recv_time, offset_time;</span><br><span class="line">    int rtt;  //round trip time</span><br><span class="line"></span><br><span class="line">    struct ip* ip_hdr = (struct ip *)buf;</span><br><span class="line">    iphdr_len = ip_hdr-&gt;ip_hl*4;</span><br><span class="line">    struct icmp* icmp = (struct icmp*)(buf+iphdr_len);</span><br><span class="line">    len-=iphdr_len;  //icmp包长度</span><br><span class="line">    if(len &lt; 8)   //判断长度是否为ICMP包长度</span><br><span class="line">    &#123;</span><br><span class="line">        fprintf(stderr, &quot;Invalid icmp packet.Its length is less than 8\n&quot;);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //判断该包是ICMP回送回答包且该包是我们发出去的</span><br><span class="line">    if((icmp-&gt;icmp_type == ICMP_ECHOREPLY) &amp;&amp; (icmp-&gt;icmp_id == (pid &amp; 0xffff))) </span><br><span class="line">    &#123;</span><br><span class="line">        if((icmp-&gt;icmp_seq &lt; 0) || (icmp-&gt;icmp_seq &gt; PACKET_SEND_MAX_NUM))</span><br><span class="line">        &#123;</span><br><span class="line">            fprintf(stderr, &quot;icmp packet seq is out of range!\n&quot;);</span><br><span class="line">            return -1;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        ping_packet[icmp-&gt;icmp_seq].flag = 0;</span><br><span class="line">        begin_time = ping_packet[icmp-&gt;icmp_seq].begin_time;</span><br><span class="line">        gettimeofday(&amp;recv_time, NULL);</span><br><span class="line"></span><br><span class="line">        offset_time = cal_time_offset(begin_time, recv_time);</span><br><span class="line">        rtt = offset_time.tv_sec*1000 + offset_time.tv_usec/1000; //毫秒为单位</span><br><span class="line"></span><br><span class="line">        printf(&quot;%d byte from %s: icmp_seq=%u ttl=%d rtt=%d ms\n&quot;,</span><br><span class="line">            len, inet_ntoa(ip_hdr-&gt;ip_src), icmp-&gt;icmp_seq, ip_hdr-&gt;ip_ttl, rtt);        </span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    else</span><br><span class="line">    &#123;</span><br><span class="line">        fprintf(stderr, &quot;Invalid ICMP packet! Its id is not matched!\n&quot;);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void ping_send()</span><br><span class="line">&#123;</span><br><span class="line">    char send_buf[128];</span><br><span class="line">    memset(send_buf, 0, sizeof(send_buf));</span><br><span class="line">    gettimeofday(&amp;start_time, NULL); //记录第一个ping包发出的时间</span><br><span class="line">    while(alive)</span><br><span class="line">    &#123;</span><br><span class="line">        int size = 0;</span><br><span class="line">        gettimeofday(&amp;(ping_packet[send_count].begin_time), NULL);</span><br><span class="line">        ping_packet[send_count].flag = 1; //将该标记为设置为该包已发送</span><br><span class="line"></span><br><span class="line">        icmp_pack((struct icmp*)send_buf, send_count, 64); //封装icmp包</span><br><span class="line">        size = sendto(rawsock, send_buf, 64, 0, (struct sockaddr*)&amp;dest, sizeof(dest));</span><br><span class="line">        send_count++; //记录发出ping包的数量</span><br><span class="line">        if(size &lt; 0)</span><br><span class="line">        &#123;</span><br><span class="line">            fprintf(stderr, &quot;send icmp packet fail!\n&quot;);</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        sleep(1);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void ping_recv()</span><br><span class="line">&#123;</span><br><span class="line">    struct timeval tv;</span><br><span class="line">    tv.tv_usec = 200;  //设置select函数的超时时间为200us</span><br><span class="line">    tv.tv_sec = 0;</span><br><span class="line">    fd_set read_fd;</span><br><span class="line">    char recv_buf[512];</span><br><span class="line">    memset(recv_buf, 0 ,sizeof(recv_buf));</span><br><span class="line">    while(alive)</span><br><span class="line">    &#123;</span><br><span class="line">        int ret = 0;</span><br><span class="line">        FD_ZERO(&amp;read_fd);</span><br><span class="line">        FD_SET(rawsock, &amp;read_fd);</span><br><span class="line">        ret = select(rawsock+1, &amp;read_fd, NULL, NULL, &amp;tv);</span><br><span class="line">        switch(ret)</span><br><span class="line">        &#123;</span><br><span class="line">            case -1:</span><br><span class="line">                fprintf(stderr,&quot;fail to select!\n&quot;);</span><br><span class="line">                break;</span><br><span class="line">            case 0:</span><br><span class="line">                break;</span><br><span class="line">            default:</span><br><span class="line">                &#123;</span><br><span class="line">                    int size = recv(rawsock, recv_buf, sizeof(recv_buf), 0);</span><br><span class="line">                    if(size &lt; 0)</span><br><span class="line">                    &#123;</span><br><span class="line">                        fprintf(stderr,&quot;recv data fail!\n&quot;);</span><br><span class="line">                        continue;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    ret = icmp_unpack(recv_buf, size); //对接收的包进行解封</span><br><span class="line">                    if(ret == -1)  //不是属于自己的icmp包，丢弃不处理</span><br><span class="line">                    &#123;</span><br><span class="line">                        continue;</span><br><span class="line">                    &#125;</span><br><span class="line">                    recv_count++; //接收包计数</span><br><span class="line">                &#125;</span><br><span class="line">                break;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void icmp_sigint(int signo)</span><br><span class="line">&#123;</span><br><span class="line">    alive = 0;</span><br><span class="line">    gettimeofday(&amp;end_time, NULL);</span><br><span class="line">    time_interval = cal_time_offset(start_time, end_time);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void ping_stats_show()</span><br><span class="line">&#123;</span><br><span class="line">    long time = time_interval.tv_sec*1000+time_interval.tv_usec/1000;</span><br><span class="line">    /*注意除数不能为零，这里send_count有可能为零，所以运行时提示错误*/</span><br><span class="line">    printf(&quot;%d packets transmitted, %d recieved, %d%c packet loss, time %ldms\n&quot;,</span><br><span class="line">        send_count, recv_count, (send_count-recv_count)*100/send_count, &apos;%&apos;, time);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">int main(int argc, char* argv[])</span><br><span class="line">&#123;</span><br><span class="line">    int size = 128*1024;//128k</span><br><span class="line">    struct protoent* protocol = NULL;</span><br><span class="line">    char dest_addr_str[80];</span><br><span class="line">    memset(dest_addr_str, 0, 80);</span><br><span class="line">    unsigned int inaddr = 1;</span><br><span class="line">    struct hostent* host = NULL;</span><br><span class="line"></span><br><span class="line">    pthread_t send_id,recv_id;</span><br><span class="line"></span><br><span class="line">    if(argc &lt; 2)</span><br><span class="line">    &#123;</span><br><span class="line">        printf(&quot;Invalid IP ADDRESS!\n&quot;);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    protocol = getprotobyname(&quot;icmp&quot;); //获取协议类型ICMP</span><br><span class="line">    if(protocol == NULL)</span><br><span class="line">    &#123;</span><br><span class="line">        printf(&quot;Fail to getprotobyname!\n&quot;);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    memcpy(dest_addr_str, argv[1], strlen(argv[1])+1);</span><br><span class="line"></span><br><span class="line">    rawsock = socket(AF_INET,SOCK_RAW,protocol-&gt;p_proto);</span><br><span class="line">    if(rawsock &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        printf(&quot;Fail to create socket!\n&quot;);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    pid = getpid();</span><br><span class="line"></span><br><span class="line">    setsockopt(rawsock, SOL_SOCKET, SO_RCVBUF, &amp;size, sizeof(size)); //增大接收缓冲区至128K</span><br><span class="line"></span><br><span class="line">    bzero(&amp;dest,sizeof(dest));</span><br><span class="line"></span><br><span class="line">    dest.sin_family = AF_INET;</span><br><span class="line"></span><br><span class="line">    inaddr = inet_addr(argv[1]);</span><br><span class="line">    if(inaddr == INADDR_NONE)   //判断用户输入的是否为IP地址还是域名</span><br><span class="line">    &#123;</span><br><span class="line">        //输入的是域名地址</span><br><span class="line">        host = gethostbyname(argv[1]);</span><br><span class="line">        if(host == NULL)</span><br><span class="line">        &#123;</span><br><span class="line">            printf(&quot;Fail to gethostbyname!\n&quot;);</span><br><span class="line">            return -1;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        memcpy((char*)&amp;dest.sin_addr, host-&gt;h_addr, host-&gt;h_length);</span><br><span class="line">    &#125;</span><br><span class="line">    else</span><br><span class="line">    &#123;</span><br><span class="line">        memcpy((char*)&amp;dest.sin_addr, &amp;inaddr, sizeof(inaddr));//输入的是IP地址</span><br><span class="line">    &#125;</span><br><span class="line">    inaddr = dest.sin_addr.s_addr;</span><br><span class="line">    printf(&quot;PING %s, (%d.%d.%d.%d) 56(84) bytes of data.\n&quot;,dest_addr_str,</span><br><span class="line">        (inaddr&amp;0x000000ff), (inaddr&amp;0x0000ff00)&gt;&gt;8, </span><br><span class="line">        (inaddr&amp;0x00ff0000)&gt;&gt;16, (inaddr&amp;0xff000000)&gt;&gt;24);</span><br><span class="line"></span><br><span class="line">    alive = 1;  //控制ping的发送和接收</span><br><span class="line"></span><br><span class="line">    signal(SIGINT, icmp_sigint);</span><br><span class="line"></span><br><span class="line">    if(pthread_create(&amp;send_id, NULL, (void*)ping_send, NULL))</span><br><span class="line">    &#123;</span><br><span class="line">        printf(&quot;Fail to create ping send thread!\n&quot;);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if(pthread_create(&amp;recv_id, NULL, (void*)ping_recv, NULL))</span><br><span class="line">    &#123;</span><br><span class="line">        printf(&quot;Fail to create ping recv thread!\n&quot;);</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    pthread_join(send_id, NULL);//等待send ping线程结束后进程再结束</span><br><span class="line">    pthread_join(recv_id, NULL);//等待recv ping线程结束后进程再结束</span><br><span class="line"></span><br><span class="line">    ping_stats_show();</span><br><span class="line"></span><br><span class="line">    close(rawsock);</span><br><span class="line">    return 0;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译:<code>gcc -g -o ping_test2 ping_test2.c -lpthread</code></p>
+<p>运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">➜  ping_test ./ping_test2 www.baidu.com</span><br><span class="line">PING www.baidu.com, (14.215.177.39) 56(84) bytes of data.</span><br><span class="line">64 byte from 14.215.177.39: icmp_seq=0 ttl=128 rtt=20 ms</span><br><span class="line">64 byte from 14.215.177.39: icmp_seq=1 ttl=128 rtt=20 ms</span><br><span class="line">64 byte from 14.215.177.39: icmp_seq=2 ttl=128 rtt=20 ms</span><br><span class="line">64 byte from 14.215.177.39: icmp_seq=3 ttl=128 rtt=19 ms</span><br></pre></td></tr></table></figure>
+<h3 id="ICMP实现Traceroute"><a href="#ICMP实现Traceroute" class="headerlink" title="ICMP实现Traceroute"></a>ICMP实现Traceroute</h3><p>Traceroute基于报文头中的TTL值来逐跳跟踪报文的转发路径。为了跟踪到达某特定目的地址的路径，源端首先将报文的TTL值设置为1。该报文到达第一个节点后，TTL超时，于是该节点向源端发送TTL超时消息，消息中携带时间戳。然后源端将报文的TTL值设置为2，报文到达第二个节点后超时，该节点同样返回TTL超时消息，以此类推，直到报文到达目的地。这样，源端根据返回的报文中的信息可以跟踪到报文经过的每一个节点，并根据时间戳信息计算往返时间。Traceroute是检测网络丢包及时延的有效手段，同时可以帮助管理员发现网络中的路由环路。</p>
+<p><strong>工作流程</strong></p>
+<ol>
+<li>向目的地发送一个TTL为1的UDP数据报（随机选取的未被使用的目的端口发送数据报）</li>
+<li>该数据报导致第一跳路由返送一个ICMP错误（time exceeded in transit 传输超时）</li>
+<li>每递增TTL一次发送一个UDP数据报，逐步确定下一跳路由器</li>
+<li>当UDP数据报（TTL增加到一定大小后）到达最终目的地时，目标主机返送一个ICMP错误（port unreachable 端口不可达）</li>
+</ol>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g8zpj8krw4j30yg0c4dgp.jpg" alt="图片3.png"></p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1g8zpndvh7uj30go0e1ten.jpg" alt="806469-20180306124141264-1747233430.png"></p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a href="https://www.cnblogs.com/iiiiher/p/8513748.html" target="_blank" rel="noopener">https://www.cnblogs.com/iiiiher/p/8513748.html</a></p>
+<p><a href="https://www.linuxidc.com/Linux/2018-09/154369.htm" target="_blank" rel="noopener">https://www.linuxidc.com/Linux/2018-09/154369.htm</a></p>
+<p><a href="https://www.cnblogs.com/skyfsm/p/6348040.html?utm_source=itdadao&amp;utm_medium=referral" target="_blank" rel="noopener">https://www.cnblogs.com/skyfsm/p/6348040.html?utm_source=itdadao&amp;utm_medium=referral</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/11/16/浅谈DNS重绑定漏洞/" rel="next" title="浅谈DNS重绑定漏洞">
+                <i class="fa fa-chevron-left"></i> 浅谈DNS重绑定漏洞
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/touxiang.png" alt="R1dd1er">
+            
+              <p class="site-author-name" itemprop="name">R1dd1er</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">14</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#原始套接口"><span class="nav-number">2.</span> <span class="nav-text">原始套接口</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是原始套接口"><span class="nav-number">2.1.</span> <span class="nav-text">什么是原始套接口</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ICMP"><span class="nav-number">3.</span> <span class="nav-text">ICMP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是ICMP协议"><span class="nav-number">3.1.</span> <span class="nav-text">什么是ICMP协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ICMP实现Ping命令"><span class="nav-number">3.2.</span> <span class="nav-text">ICMP实现Ping命令</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#C语言实现Ping"><span class="nav-number">3.2.1.</span> <span class="nav-text">C语言实现Ping</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#ICMP包的封装"><span class="nav-number">3.2.1.1.</span> <span class="nav-text">ICMP包的封装</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ICMP包的解包"><span class="nav-number">3.2.1.2.</span> <span class="nav-text">ICMP包的解包</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#发送数据包"><span class="nav-number">3.2.1.3.</span> <span class="nav-text">发送数据包</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#接收数据包"><span class="nav-number">3.2.1.4.</span> <span class="nav-text">接收数据包</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#中断处理"><span class="nav-number">3.2.1.5.</span> <span class="nav-text">中断处理</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#完整代码"><span class="nav-number">3.2.1.6.</span> <span class="nav-text">完整代码</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ICMP实现Traceroute"><span class="nav-number">3.3.</span> <span class="nav-text">ICMP实现Traceroute</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">4.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">R1dd1er</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

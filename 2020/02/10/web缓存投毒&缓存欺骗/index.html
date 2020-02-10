@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Web缓存投毒(Web Cache Poisoning)缓存技术简介Web缓存位于用户和应用程序服务器之间，用于保存和提供某些响应的副本 在下图中，我们可以看到三个用户一个接一个地获取相同的资源：   缓存技术旨在通过减少延迟来加速页面加载，还可以减少应用程序服务器上的负载。一些公司使用像Varnish这样的软件来托管他们自己的缓存，而其他公司选择依赖像Cloudflare这样的内容分发网络（CD">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Web缓存投毒与缓存欺骗">
+<meta property="og:url" content="http://yoursite.com/2020/02/10/web缓存投毒&缓存欺骗/index.html">
+<meta property="og:site_name" content="R1dd1er&#39;s blogs">
+<meta property="og:description" content="Web缓存投毒(Web Cache Poisoning)缓存技术简介Web缓存位于用户和应用程序服务器之间，用于保存和提供某些响应的副本 在下图中，我们可以看到三个用户一个接一个地获取相同的资源：   缓存技术旨在通过减少延迟来加速页面加载，还可以减少应用程序服务器上的负载。一些公司使用像Varnish这样的软件来托管他们自己的缓存，而其他公司选择依赖像Cloudflare这样的内容分发网络（CD">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1gbmqi1lpvzj30sj07g3ze.jpg">
+<meta property="og:updated_time" content="2020-02-10T04:58:39.366Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Web缓存投毒与缓存欺骗">
+<meta name="twitter:description" content="Web缓存投毒(Web Cache Poisoning)缓存技术简介Web缓存位于用户和应用程序服务器之间，用于保存和提供某些响应的副本 在下图中，我们可以看到三个用户一个接一个地获取相同的资源：   缓存技术旨在通过减少延迟来加速页面加载，还可以减少应用程序服务器上的负载。一些公司使用像Varnish这样的软件来托管他们自己的缓存，而其他公司选择依赖像Cloudflare这样的内容分发网络（CD">
+<meta name="twitter:image" content="http://ww1.sinaimg.cn/large/00643K3ogy1gbmqi1lpvzj30sj07g3ze.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'R1dd1er'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/02/10/web缓存投毒&缓存欺骗/">
+
+
+
+
+
+  <title>Web缓存投毒与缓存欺骗 | R1dd1er's blogs</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">R1dd1er's blogs</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">积跬步，至千里</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/02/10/web缓存投毒&缓存欺骗/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="R1dd1er">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/touxiang.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="R1dd1er's blogs">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Web缓存投毒与缓存欺骗</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-02-10T12:57:23+08:00">
+                2020-02-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv"></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Web缓存投毒-Web-Cache-Poisoning"><a href="#Web缓存投毒-Web-Cache-Poisoning" class="headerlink" title="Web缓存投毒(Web Cache Poisoning)"></a>Web缓存投毒(Web Cache Poisoning)</h1><h2 id="缓存技术简介"><a href="#缓存技术简介" class="headerlink" title="缓存技术简介"></a>缓存技术简介</h2><p>Web缓存位于用户和应用程序服务器之间，用于保存和提供某些响应的副本</p>
+<p>在下图中，我们可以看到三个用户一个接一个地获取相同的资源：</p>
+<p><img src="http://ww1.sinaimg.cn/large/00643K3ogy1gbmqi1lpvzj30sj07g3ze.jpg" alt="FG8EL$L(J_9A(E_F`J%(2X8.png"></p>
+<blockquote>
+<p>缓存技术旨在通过减少延迟来加速页面加载，还可以减少应用程序服务器上的负载。一些公司使用像Varnish这样的软件来托管他们自己的缓存，而其他公司选择依赖像Cloudflare这样的内容分发网络（CDN），缓存分布在世界各地。此外，一些流行的Web应用程序和框架（如Drupal）具有内置缓存。</p>
+</blockquote>
+<h3 id="Vary简介"><a href="#Vary简介" class="headerlink" title="Vary简介"></a>Vary简介</h3><p>Vary,HTTP协议中的一个响应头,简单来说就是<strong>告诉缓存服务器，在哪些HTTP头不同的情况下，缓存需要被重新获取。</strong></p>
+<p>如果服务端响应头中包含：<code>Vary: User-Agent</code>。这时候，缓存服务器就会按照请求头里的<code>User-Agent</code>来缓存内容，如果两个浏览器<code>User-Agent</code>相同，他们就会命中同一个缓存。</p>
+<p><code>User-Agent</code>在这也就变成了缓存键</p>
+<p>Django开发的网站，如果使用了<code>SessionAuthenticationMiddleware</code>，就会返回<code>Vary: Cookie</code>头。这种情况下，如果前端架设了缓存服务器，Cookie不同的用户的缓存页面就不会相同了。这样就可以避免缓存欺骗的漏洞(下文会详细描述)</p>
+<h2 id="漏洞简介"><a href="#漏洞简介" class="headerlink" title="漏洞简介"></a>漏洞简介</h2><p><strong>攻击者使缓存服务器存储了有害的页面，此时正常用户如果命中了这个缓存，将会被有害页面攻击</strong></p>
+<h2 id="基础例子"><a href="#基础例子" class="headerlink" title="基础例子"></a>基础例子</h2><blockquote>
+<p> 作为一个网站开发和运维，如果你自己来部署缓存的这一套东西，你会怎么做。比如，我开发了一个面向全球读者的网站，在用户访问相同Path的情况下，后端根据用户浏览器的语言设置（也就是请求头中的<code>Accept-Language</code>）返回不同语言的页面；另外，为了兼容IE等老浏览器，用户的<code>User-Agent</code>不同，后端返回的页面也可能不同。 所以此时，后端会返回这样的头：<code>Vary: User-Agent,  Accept-Language</code>。那么，缓存服务器就根据这几个头的值，加上用户请求的PATH，最终构成比如memcached里的“键名”。</p>
+</blockquote>
+<p>所以，缓存中的键名就是：request.path + request.headers[‘HTTP_ACCEPT_LANGUAGE’] +  request.headers[‘HTTP_USER_AGRNT’]。下次遇到这三个值均相同的请求后，直接返回缓存中的值，不再请求后端服务器。</p>
+<p>在后端逻辑复杂以后，就有可能存在一种情况：页面里输出了没有被缓存服务器考虑到的HTTP头。这种情况下，将可能导致被缓存投毒攻击。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!doctype html&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">html</span> <span class="attr">class</span>=<span class="string">"no-js"</span> <span class="attr">lang</span>=<span class="string">"en"</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"utf-8"</span> /&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">title</span>&gt;</span>Sample<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"stylesheet"</span> <span class="attr">href</span>=<span class="string">"//&lt;?php echo $_SERVER['SERVER_NAME']； ?&gt;/static/css/main.css"</span>&gt;</span></span><br><span class="line">        ...</span><br></pre></td></tr></table></figure>
+<p>在部分情况下中$_SERVER[‘SERVER_NAME’]是可能可以被通过Host头控制的，所以这里存在一处XSS漏洞。但这是一个self xss漏洞，因为攻击者无法控制用户的HTTP头</p>
+<p>正常情况下并不会有太大问题，但如果这个页面被架设在上面例子中的缓存服务器后，就可能出现问题。由于Host头没有被缓存考虑到，第一个用户通过如下数据包访问：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GET / HTTP/1.1</span><br><span class="line">    Host: example.com&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;</span><br><span class="line">    ...</span><br></pre></td></tr></table></figure>
+<p>于是缓存服务器上存储了如下HTML：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!doctype html&gt;</span></span><br><span class="line">   <span class="tag">&lt;<span class="name">html</span> <span class="attr">class</span>=<span class="string">"no-js"</span> <span class="attr">lang</span>=<span class="string">"en"</span>&gt;</span></span><br><span class="line">     <span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">"utf-8"</span> /&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="name">title</span>&gt;</span>Sample<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="name">link</span> <span class="attr">rel</span>=<span class="string">"stylesheet"</span> <span class="attr">href</span>=<span class="string">"//example.com"</span>&gt;</span><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined">alert(1)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span>/static/css/main.css"&gt;</span><br><span class="line">       ...</span><br></pre></td></tr></table></figure>
+<p>此时，相同浏览器、相同语言的用户访问这个页面，就会触发XSS漏洞。于是，通过缓存投毒，一个self xss被成功转化成存储型XSS了。可以将其扩展到很多存在self xss的场景中，也可能存在于只有自己能够利用的URL跳转漏洞里。</p>
+<h2 id="实战案例"><a href="#实战案例" class="headerlink" title="实战案例"></a>实战案例</h2><p><a href="https://www.anquanke.com/post/id/156356#h3-10" target="_blank" rel="noopener">https://www.anquanke.com/post/id/156356#h3-10</a></p>
+<p><a href="https://www.anquanke.com/post/id/156551" target="_blank" rel="noopener">https://www.anquanke.com/post/id/156551</a></p>
+<h2 id="防御措施"><a href="#防御措施" class="headerlink" title="防御措施"></a>防御措施</h2><ol>
+<li>直接禁用缓存功能(有点不切实际)</li>
+<li>只对纯静态的内容响应进行缓存</li>
+<li>禁用非缓存键的输入</li>
+</ol>
+<h1 id="Web缓存欺骗-Web-Cache-Deception"><a href="#Web缓存欺骗-Web-Cache-Deception" class="headerlink" title="Web缓存欺骗(Web Cache Deception)"></a>Web缓存欺骗(Web Cache Deception)</h1><h2 id="漏洞简介-1"><a href="#漏洞简介-1" class="headerlink" title="漏洞简介"></a>漏洞简介</h2><p>Web缓存是指Web资源以副本的形式介于Web服务器和客户端之间，当下一个相同请求来到的时候，会根据缓存机制决定是直接使用副本响应访问请求，还是向源服务器再次发送请求。在实际应用中，web缓存十分常见，主要是Web缓存有着如下的优点：产生极小的网络流量，减少对源服务器的请求，降低服务器的压力，  同时能够明显加快页面打开速度。缓存分为以下几种类型：（1）数据库缓存，当web应用的数据库表繁多，为了提供查询的性能，会将查询后的数据放到内存中进行缓存，下次从内存缓存直接返回，比如memcached（2）浏览器缓存，浏览器会将一些页面缓存到客户端 ，不同的浏览器有着自己的缓存机制。（3） 服务端缓存：常见的服务端缓存比如：CND、Squid、Nginx反向代理等。</p>
+<p><strong>Web Cache Deception的核心是，攻击者去欺骗缓存服务器，让它缓存了本来不应该缓存的页面，导致敏感信息泄露。</strong></p>
+<h2 id="基础例子-1"><a href="#基础例子-1" class="headerlink" title="基础例子"></a>基础例子</h2><p>假设我们要访问的某个网站使用了服务器缓存技术，架构如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">User              Nginx Proxy             Apache+PHP</span><br></pre></td></tr></table></figure>
+<p>当注册的用户成功登入了该网站，会跳转到自己的账户页面my.php，该Nginx反向代理服务器会将css、js、jpg等静态资源缓存到nginx设定的目录下。受害者不小心在浏览器中输入了如下的url：<a href="http://victim.com/my.php/favicon.ico" target="_blank" rel="noopener">http://victim.com/my.php/favicon.ico</a> ， 但favicon.ico 并不存在</p>
+<p>Nginx反向代理服务器发现url以静态文件的扩展名(.ico)结尾，由于favicon.ico 不存在，它的缓存机制会将 my.php 缓存到缓存目录中，这时攻击者访问了：<a href="http://victim.com/my.php/favicon.ico" target="_blank" rel="noopener">http://victim.com/my.php/favicon.ico</a> ，之前 缓存的帐户页面便成功返回给了攻击者。</p>
+<h3 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h3><blockquote>
+<p>1.访问<a href="http://victim.com/my.php/favicon.ico" target="_blank" rel="noopener">http://victim.com/my.php/favicon.ico</a> 页面时， Web服务器返回了该my.php的内容</p>
+<ol start="2">
+<li>服务器的缓存机制通过url中的扩展名来判断是否进行缓存文件，并且忽略任何缓存头。</li>
+</ol>
+<p>3.受害者必须访问过了<a href="http://victim.com/my.php/favicon.ico" target="_blank" rel="noopener">http://victim.com/my.php/favicon.ico</a> 这种页面，也就是说受害者已经将my.php的内容缓存到了缓存服务器上。</p>
+</blockquote>
+<p>要想满足以上几个条件，需要考虑到不同的web服务器、代理机制以及浏览器着各自的特性。比如：我们在tomcat服务器上访问<a href="http://victim.com/my.jsp/1.css，服务器无法返回my.jsp的内容，因此这种攻击无法利用在tomcat+java上面。" target="_blank" rel="noopener">http://victim.com/my.jsp/1.css，服务器无法返回my.jsp的内容，因此这种攻击无法利用在tomcat+java上面。</a></p>
+<h2 id="深入理解"><a href="#深入理解" class="headerlink" title="深入理解"></a>深入理解</h2><h3 id="Nginx-php"><a href="#Nginx-php" class="headerlink" title="Nginx + php"></a>Nginx + php</h3><p>缓存服务器，通常用来缓存静态文件，这个时候我需要告诉他用户访问哪些内容的时候应该被缓存，比如我们用Nginx做一个简单的缓存服务器：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">    <span class="comment"># ...</span></span><br><span class="line">    </span><br><span class="line">    <span class="attribute">proxy_cache_path</span>  /data/nginx/cache  levels=<span class="number">1</span>:<span class="number">2</span>    keys_zone=STATIC:<span class="number">10m</span></span><br><span class="line">    inactive=<span class="number">24h</span>  max_size=<span class="number">1g</span>;</span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="comment"># ...</span></span><br><span class="line">        </span><br><span class="line">    	<span class="attribute">location</span> \.(css|js|jpeg|jpg|png|gif)$ &#123;</span><br><span class="line">    	    <span class="attribute">proxy_pass</span>             http://10.2.122.1;</span><br><span class="line">            <span class="attribute">proxy_set_header</span>       Host <span class="variable">$host</span>;</span><br><span class="line">            <span class="attribute">proxy_buffering</span>        <span class="literal">on</span>;</span><br><span class="line">            <span class="attribute">proxy_cache</span>            STATIC;</span><br><span class="line">            <span class="attribute">proxy_cache_valid</span>      <span class="number">200</span>  <span class="number">1d</span>;</span><br><span class="line">    	&#125;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">location</span> / &#123;</span><br><span class="line">            <span class="attribute">proxy_pass</span>             http://10.2.122.1;</span><br><span class="line">            <span class="attribute">proxy_set_header</span>       Host <span class="variable">$host</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>解释一下这个配置文件做了什么。Nginx将数据包反向代理到内网的服务器10.2.122.1中，并根据请求的PATH，将请求分成两种类型：当后缀是静态文件（包括css、js和图片）时，Nginx将开启缓存，并设置当响应status是200的时候缓存1天时间；其他情况下，不使用缓存。</p>
+<p>这是一个比较常见的逻辑，假设10.2.122.1所在的后端服务器是一个PHP开发的站点，用户访问 <a href="http://10.2.122.1/profile.php" target="_blank" rel="noopener">http://10.2.122.1/profile.php</a> 即可查看自己的个人信息。</p>
+<p>PHP支持一种叫<code>PATH_INFO</code>的CGI变量的，也就是当用户请求一个已存在的PHP脚本时，在后面加上<code>/DATA</code>，从<code>/</code>开始的数据将会保存在<code>$_SERVER[&#39;PATH_INFO&#39;]</code>中。</p>
+<p>当用户请求了 <a href="http://10.2.122.1/profile.php/test.css" target="_blank" rel="noopener">http://10.2.122.1/profile.php/test.css</a> ， 用户实际访问的是profile.php页面，但其PATH却是<code>/profile.php/test.css</code>。此时，后端返回的是用户的个人信息页面，然而Nginx会认为这是一个静态文件，并将其内容缓存下来。</p>
+<p>也就是说，这个用户的个人信息被保存在缓存服务器中。此时，其他用户再次访问<code>/profile.php/test.css</code>的时候，将可以看到这些信息，导致了信息泄露漏洞。</p>
+<h3 id="django"><a href="#django" class="headerlink" title="django"></a>django</h3><p>用Django开发的应用，如果配置了<code>/(.*)</code>这样的Router，如：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> django.urls <span class="keyword">import</span> re_path</span><br><span class="line"></span><br><span class="line">urlpatterns = [</span><br><span class="line">	re_path(<span class="string">r'^page/(.*)$'</span>, page)</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p>这样，用户请求<code>/page/test.css</code>一样可以访问到page这个视图，而缓存服务器会认为这是一个静态文件。</p>
+<h3 id="漏洞实例"><a href="#漏洞实例" class="headerlink" title="漏洞实例"></a>漏洞实例</h3><p>Paypal的一个实际案例：<a href="https://vimeo.com/249130093" target="_blank" rel="noopener">https://vimeo.com/249130093</a> 。 </p>
+<p>作者发现，Paypal会缓存以下后缀的URL：aif, aiff, au, avi, bin, bmp, cab, carb, cct,  cdf, class, css, doc, dcr, dtd, gcf, gff, gif, grv, hdml, hqx, ico, ini, jpeg, jpg, js, mov, mp3, nc, pct, ppc, pws, swa, swf, txt, vbs, w32,  wav, wbmp, wml, wmlc, wmls, wmlsc, xsd,  zip，而其用户页面<code>hxxps://www.paypal.com/myaccount/home</code>，在后面加任何PATH都不影响返回的HTML，如<code>hxxps://www.paypal.com/myaccount/home/attack.css</code>。 这两个特点刚好满足缓存欺骗攻击的条件，于是，攻击者只需让用户访问一次<code>/myaccount/home/attack.css</code>，用户的个人信息就被公之于众了，包括姓名、余额、信用卡信息等等</p>
+<h2 id="防御措施-1"><a href="#防御措施-1" class="headerlink" title="防御措施"></a>防御措施</h2><ol>
+<li>只有当HTTP Header允许时才允许缓存服务器进行缓存 </li>
+<li>根据Content-Type来决定是否缓存，比如.css后缀的URL一定要返回text/css的数据，否则不进行缓存 </li>
+<li>关闭PATH_INFO或者通配符的Router，<strong>当用户请求不存在的页面时返回404或302</strong></li>
+</ol>
+<h3 id="解决缓存欺骗漏洞的根本方法"><a href="#解决缓存欺骗漏洞的根本方法" class="headerlink" title="解决缓存欺骗漏洞的根本方法"></a>解决缓存欺骗漏洞的根本方法</h3><p>如果缓存里包含用户信息，那么一定要指定<code>Vary: Cookie</code>头，且缓存服务器要根据这个头来设置缓存键名。这样，即使缓存服务器错误地缓存了不该被缓存的页面，也只有相同Cookie的人才能看到这个缓存。显然攻击者是不知道用户的SESSION ID的</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p><a href="https://www.freebuf.com/articles/web/161670.html" target="_blank" rel="noopener">https://www.freebuf.com/articles/web/161670.html</a></p>
+<p>p牛的代码审计小密圈</p>
+<p><a href="https://www.anquanke.com/post/id/156356" target="_blank" rel="noopener">https://www.anquanke.com/post/id/156356</a></p>
+<p><a href="https://www.anquanke.com/post/id/156551" target="_blank" rel="noopener">https://www.anquanke.com/post/id/156551</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/02/06/tp5.1反序列化/" rel="next" title="Thinkphp 5.1.x 反序列化漏洞复现">
+                <i class="fa fa-chevron-left"></i> Thinkphp 5.1.x 反序列化漏洞复现
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/touxiang.png" alt="R1dd1er">
+            
+              <p class="site-author-name" itemprop="name">R1dd1er</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Web缓存投毒-Web-Cache-Poisoning"><span class="nav-number">1.</span> <span class="nav-text">Web缓存投毒(Web Cache Poisoning)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存技术简介"><span class="nav-number">1.1.</span> <span class="nav-text">缓存技术简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Vary简介"><span class="nav-number">1.1.1.</span> <span class="nav-text">Vary简介</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#漏洞简介"><span class="nav-number">1.2.</span> <span class="nav-text">漏洞简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基础例子"><span class="nav-number">1.3.</span> <span class="nav-text">基础例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实战案例"><span class="nav-number">1.4.</span> <span class="nav-text">实战案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#防御措施"><span class="nav-number">1.5.</span> <span class="nav-text">防御措施</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Web缓存欺骗-Web-Cache-Deception"><span class="nav-number">2.</span> <span class="nav-text">Web缓存欺骗(Web Cache Deception)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#漏洞简介-1"><span class="nav-number">2.1.</span> <span class="nav-text">漏洞简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基础例子-1"><span class="nav-number">2.2.</span> <span class="nav-text">基础例子</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#利用条件"><span class="nav-number">2.2.1.</span> <span class="nav-text">利用条件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#深入理解"><span class="nav-number">2.3.</span> <span class="nav-text">深入理解</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Nginx-php"><span class="nav-number">2.3.1.</span> <span class="nav-text">Nginx + php</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#django"><span class="nav-number">2.3.2.</span> <span class="nav-text">django</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#漏洞实例"><span class="nav-number">2.3.3.</span> <span class="nav-text">漏洞实例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#防御措施-1"><span class="nav-number">2.4.</span> <span class="nav-text">防御措施</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#解决缓存欺骗漏洞的根本方法"><span class="nav-number">2.4.1.</span> <span class="nav-text">解决缓存欺骗漏洞的根本方法</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考资料"><span class="nav-number">3.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">R1dd1er</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
